@@ -1,0 +1,4852 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+ProveoWeb/
+  .git/
+    hooks/
+      applypatch-msg.sample
+      commit-msg.sample
+      fsmonitor-watchman.sample
+      post-update.sample
+      pre-applypatch.sample
+      pre-commit.sample
+      pre-merge-commit.sample
+      pre-push.sample
+      pre-rebase.sample
+      pre-receive.sample
+      prepare-commit-msg.sample
+      push-to-checkout.sample
+      sendemail-validate.sample
+      update.sample
+    info/
+      exclude
+    logs/
+      refs/
+        heads/
+          main
+        remotes/
+          origin/
+            HEAD
+      HEAD
+    objects/
+      pack/
+        pack-7b09ab2983a6364c7097199b7c7e9da281f775f7.idx
+        pack-7b09ab2983a6364c7097199b7c7e9da281f775f7.pack
+        pack-7b09ab2983a6364c7097199b7c7e9da281f775f7.rev
+    refs/
+      heads/
+        main
+      remotes/
+        origin/
+          HEAD
+    config
+    description
+    HEAD
+    index
+    packed-refs
+  backend/
+    migrations/
+      .gitkeep
+      001_esquema_mysql.sql
+    src/
+      controllers/
+        .gitkeep
+        authController.js
+        proveedorController.js
+      middlewares/
+        auth.js
+        profileImageUpload.js
+        roles.js
+        validate.js
+      repositories/
+        .gitkeep
+        proveedorRepository.js
+      routes/
+        .gitkeep
+        authRoutes.js
+        proveedorRoutes.js
+      services/
+        resena_service.js
+        solicitud_service.js
+      sockets/
+        chat.js
+      utils/
+        mexicanPhone.js
+        passwordPolicy.js
+      validaciones/
+        auth.schema.js
+        proveedor.schema.js
+      app.js
+      db.js
+    test/
+      mexicanPhone.test.js
+      passwordPolicy.test.js
+      providerAuthFlow.test.js
+    Dockerfile
+    index.js
+    package.json
+    README.md
+  frontend/
+    public/
+      img/
+        logo_proveo_transparente.png
+        logo_proveo.png
+        logo_proveo.svg
+    src/
+      components/
+        .gitkeep
+        Navbar.jsx
+      pages/
+        .gitkeep
+        Home.jsx
+        Login.jsx
+        MiCuenta.jsx
+        ProfileEdit.jsx
+        Register.jsx
+      services/
+        api.js
+        authService.js
+        proveedorService.js
+      App.jsx
+      index.css
+      main.jsx
+    Dockerfile
+    index.html
+    package.json
+    postcss.config.js
+    tailwind.config.js
+    vite.config.js
+  .gitignore
+  docker-compose.yml
+  index.htm
+  index.js
+  package.json
+  README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="ProveoWeb/.git/hooks/applypatch-msg.sample">
+#!/bin/sh
+#
+# An example hook script to check the commit log message taken by
+# applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.  The hook is
+# allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "applypatch-msg".
+
+. git-sh-setup
+commitmsg="$(git rev-parse --git-path hooks/commit-msg)"
+test -x "$commitmsg" && exec "$commitmsg" ${1+"$@"}
+:
+</file>
+
+<file path="ProveoWeb/.git/hooks/commit-msg.sample">
+#!/bin/sh
+#
+# An example hook script to check the commit log message.
+# Called by "git commit" with one argument, the name of the file
+# that has the commit message.  The hook should exit with non-zero
+# status after issuing an appropriate message if it wants to stop the
+# commit.  The hook is allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "commit-msg".
+
+# Uncomment the below to add a Signed-off-by line to the message.
+# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
+# hook is more suited to it.
+#
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+
+# This example catches duplicate Signed-off-by lines and messages that
+# would confuse 'git am'.
+
+ret=0
+
+test "" = "$(grep '^Signed-off-by: ' "$1" |
+	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
+	echo >&2 Duplicate Signed-off-by lines.
+	ret=1
+}
+
+comment_re="$(
+	{
+		git config --get-regexp "^core\.comment(char|string)\$" ||
+			echo '#'
+	} | sed -n -e '
+		${
+			s/^[^ ]* //
+			s|[][*./\]|\\&|g
+			s/^auto$/[#;@!$%^&|:]/
+			p
+		}'
+)"
+scissors_line="^${comment_re} -\{8,\} >8 -\{8,\}\$"
+comment_line="^${comment_re}.*"
+blank_line='^[ 	]*$'
+# Disallow lines starting with "diff -" or "Index: " in the body of the
+# message. Stop looking if we see a scissors line.
+line="$(sed -n -e "
+	# Skip comments and blank lines at the start of the file.
+	/${scissors_line}/q
+	/${comment_line}/d
+	/${blank_line}/d
+	# The first paragraph will become the subject header so
+	# does not need to be checked.
+	: subject
+	n
+	/${scissors_line}/q
+	/${blank_line}/!b subject
+	# Check the body of the message for problematic
+	# prefixes.
+	: body
+	n
+	/${scissors_line}/q
+	/${comment_line}/b body
+	/^diff -/{p;q;}
+	/^Index: /{p;q;}
+	b body
+	" "$1")"
+if test -n "$line"
+then
+	echo >&2 "Message contains a diff that will confuse 'git am'."
+	echo >&2 "To fix this indent the diff."
+	ret=1
+fi
+
+exit $ret
+</file>
+
+<file path="ProveoWeb/.git/hooks/fsmonitor-watchman.sample">
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use IPC::Open2;
+
+# An example hook script to integrate Watchman
+# (https://facebook.github.io/watchman/) with git to speed up detecting
+# new and modified files.
+#
+# The hook is passed a version (currently 2) and last update token
+# formatted as a string and outputs to stdout a new update token and
+# all files that have been modified since the update token. Paths must
+# be relative to the root of the working tree and separated by a single NUL.
+#
+# To enable this hook, rename this file to "query-watchman" and set
+# 'git config core.fsmonitor .git/hooks/query-watchman'
+#
+my ($version, $last_update_token) = @ARGV;
+
+# Uncomment for debugging
+# print STDERR "$0 $version $last_update_token\n";
+
+# Check the hook interface version
+if ($version ne 2) {
+	die "Unsupported query-fsmonitor hook version '$version'.\n" .
+	    "Falling back to scanning...\n";
+}
+
+my $git_work_tree = get_working_dir();
+
+my $json_pkg;
+eval {
+	require JSON::XS;
+	$json_pkg = "JSON::XS";
+	1;
+} or do {
+	require JSON::PP;
+	$json_pkg = "JSON::PP";
+};
+
+launch_watchman();
+
+sub launch_watchman {
+	my $o = watchman_query();
+	if (is_work_tree_watched($o)) {
+		output_result($o->{clock}, @{$o->{files}});
+	}
+}
+
+sub output_result {
+	my ($clockid, @files) = @_;
+
+	# Uncomment for debugging watchman output
+	# open (my $fh, ">", ".git/watchman-output.out");
+	# binmode $fh, ":utf8";
+	# print $fh "$clockid\n@files\n";
+	# close $fh;
+
+	binmode STDOUT, ":utf8";
+	print $clockid;
+	print "\0";
+	local $, = "\0";
+	print @files;
+}
+
+sub watchman_clock {
+	my $response = qx/watchman clock "$git_work_tree"/;
+	die "Failed to get clock id on '$git_work_tree'.\n" .
+		"Falling back to scanning...\n" if $? != 0;
+
+	return $json_pkg->new->utf8->decode($response);
+}
+
+sub watchman_query {
+	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j --no-pretty')
+	or die "open2() failed: $!\n" .
+	"Falling back to scanning...\n";
+
+	# In the query expression below we're asking for names of files that
+	# changed since $last_update_token but not from the .git folder.
+	#
+	# To accomplish this, we're using the "since" generator to use the
+	# recency index to select candidate nodes and "fields" to limit the
+	# output to file names only. Then we're using the "expression" term to
+	# further constrain the results.
+	my $last_update_line = "";
+	if (substr($last_update_token, 0, 1) eq "c") {
+		$last_update_token = "\"$last_update_token\"";
+		$last_update_line = qq[\n"since": $last_update_token,];
+	}
+	my $query = <<"	END";
+		["query", "$git_work_tree", {$last_update_line
+			"fields": ["name"],
+			"expression": ["not", ["dirname", ".git"]]
+		}]
+	END
+
+	# Uncomment for debugging the watchman query
+	# open (my $fh, ">", ".git/watchman-query.json");
+	# print $fh $query;
+	# close $fh;
+
+	print CHLD_IN $query;
+	close CHLD_IN;
+	my $response = do {local $/; <CHLD_OUT>};
+
+	# Uncomment for debugging the watch response
+	# open ($fh, ">", ".git/watchman-response.json");
+	# print $fh $response;
+	# close $fh;
+
+	die "Watchman: command returned no output.\n" .
+	"Falling back to scanning...\n" if $response eq "";
+	die "Watchman: command returned invalid output: $response\n" .
+	"Falling back to scanning...\n" unless $response =~ /^\{/;
+
+	return $json_pkg->new->utf8->decode($response);
+}
+
+sub is_work_tree_watched {
+	my ($output) = @_;
+	my $error = $output->{error};
+	if ($error and $error =~ m/unable to resolve root .* directory (.*) is not watched/) {
+		my $response = qx/watchman watch "$git_work_tree"/;
+		die "Failed to make watchman watch '$git_work_tree'.\n" .
+		    "Falling back to scanning...\n" if $? != 0;
+		$output = $json_pkg->new->utf8->decode($response);
+		$error = $output->{error};
+		die "Watchman: $error.\n" .
+		"Falling back to scanning...\n" if $error;
+
+		# Uncomment for debugging watchman output
+		# open (my $fh, ">", ".git/watchman-output.out");
+		# close $fh;
+
+		# Watchman will always return all files on the first query so
+		# return the fast "everything is dirty" flag to git and do the
+		# Watchman query just to get it over with now so we won't pay
+		# the cost in git to look up each individual file.
+		my $o = watchman_clock();
+		$error = $o->{error};
+
+		die "Watchman: $error.\n" .
+		"Falling back to scanning...\n" if $error;
+
+		output_result($o->{clock}, ("/"));
+		return 0;
+	}
+
+	die "Watchman: $error.\n" .
+	"Falling back to scanning...\n" if $error;
+
+	return 1;
+}
+
+sub get_working_dir {
+	my $working_dir;
+	if ($^O =~ 'msys' || $^O =~ 'cygwin') {
+		$working_dir = Win32::GetCwd();
+		$working_dir =~ tr/\\/\//;
+	} else {
+		require Cwd;
+		$working_dir = Cwd::cwd();
+	}
+
+	return $working_dir;
+}
+</file>
+
+<file path="ProveoWeb/.git/hooks/post-update.sample">
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
+</file>
+
+<file path="ProveoWeb/.git/hooks/pre-applypatch.sample">
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed
+# by applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-applypatch".
+
+. git-sh-setup
+precommit="$(git rev-parse --git-path hooks/pre-commit)"
+test -x "$precommit" && exec "$precommit" ${1+"$@"}
+:
+</file>
+
+<file path="ProveoWeb/.git/hooks/pre-commit.sample">
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=$(git hash-object -t tree /dev/null)
+fi
+
+# If you want to allow non-ASCII filenames set this variable to true.
+allownonascii=$(git config --type=bool hooks.allownonascii)
+
+# Redirect output to stderr.
+exec 1>&2
+
+# Cross platform projects tend to avoid non-ASCII filenames; prevent
+# them from being added to the repository. We exploit the fact that the
+# printable range starts at the space character and ends with tilde.
+if [ "$allownonascii" != "true" ] &&
+	# Note that the use of brackets around a tr range is ok here, (it's
+	# even required, for portability to Solaris 10's /usr/bin/tr), since
+	# the square bracket bytes happen to fall in the designated range.
+	test $(git diff-index --cached --name-only --diff-filter=A -z $against |
+	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+then
+	cat <<\EOF
+Error: Attempt to add a non-ASCII file name.
+
+This can cause problems if you want to work with people on other platforms.
+
+To be portable it is advisable to rename the file.
+
+If you know what you are doing you can disable this check using:
+
+  git config hooks.allownonascii true
+EOF
+	exit 1
+fi
+
+# If there are whitespace errors, print the offending file names and fail.
+exec git diff-index --check --cached $against --
+</file>
+
+<file path="ProveoWeb/.git/hooks/pre-merge-commit.sample">
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git merge" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message to
+# stderr if it wants to stop the merge commit.
+#
+# To enable this hook, rename this file to "pre-merge-commit".
+
+. git-sh-setup
+test -x "$GIT_DIR/hooks/pre-commit" &&
+        exec "$GIT_DIR/hooks/pre-commit"
+:
+</file>
+
+<file path="ProveoWeb/.git/hooks/pre-push.sample">
+#!/bin/sh
+
+# An example hook script to verify what is about to be pushed.  Called by "git
+# push" after it has checked the remote status, but before anything has been
+# pushed.  If this script exits with a non-zero status nothing will be pushed.
+#
+# This hook is called with the following parameters:
+#
+# $1 -- Name of the remote to which the push is being done
+# $2 -- URL to which the push is being done
+#
+# If pushing without using a named remote those arguments will be equal.
+#
+# Information about the commits which are being pushed is supplied as lines to
+# the standard input in the form:
+#
+#   <local ref> <local oid> <remote ref> <remote oid>
+#
+# This sample shows how to prevent push of commits where the log message starts
+# with "WIP" (work in progress).
+
+remote="$1"
+url="$2"
+
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+
+while read local_ref local_oid remote_ref remote_oid
+do
+	if test "$local_oid" = "$zero"
+	then
+		# Handle delete
+		:
+	else
+		if test "$remote_oid" = "$zero"
+		then
+			# New branch, examine all commits
+			range="$local_oid"
+		else
+			# Update to existing branch, examine new commits
+			range="$remote_oid..$local_oid"
+		fi
+
+		# Check for WIP commit
+		commit=$(git rev-list -n 1 --grep '^WIP' "$range")
+		if test -n "$commit"
+		then
+			echo >&2 "Found WIP commit in $local_ref, not pushing"
+			exit 1
+		fi
+	fi
+done
+
+exit 0
+</file>
+
+<file path="ProveoWeb/.git/hooks/pre-rebase.sample">
+#!/bin/sh
+#
+# Copyright (c) 2006, 2008 Junio C Hamano
+#
+# The "pre-rebase" hook is run just before "git rebase" starts doing
+# its job, and can prevent the command from running by exiting with
+# non-zero status.
+#
+# The hook is called with the following parameters:
+#
+# $1 -- the upstream the series was forked from.
+# $2 -- the branch being rebased (or empty when rebasing the current branch).
+#
+# This sample shows how to prevent topic branches that are already
+# merged to 'next' branch from getting rebased, because allowing it
+# would result in rebasing already published history.
+
+publish=next
+basebranch="$1"
+if test "$#" = 2
+then
+	topic="refs/heads/$2"
+else
+	topic=`git symbolic-ref HEAD` ||
+	exit 0 ;# we do not interrupt rebasing detached HEAD
+fi
+
+case "$topic" in
+refs/heads/??/*)
+	;;
+*)
+	exit 0 ;# we do not interrupt others.
+	;;
+esac
+
+# Now we are dealing with a topic branch being rebased
+# on top of master.  Is it OK to rebase it?
+
+# Does the topic really exist?
+git show-ref -q "$topic" || {
+	echo >&2 "No such branch $topic"
+	exit 1
+}
+
+# Is topic fully merged to master?
+not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
+if test -z "$not_in_master"
+then
+	echo >&2 "$topic is fully merged to master; better remove it."
+	exit 1 ;# we could allow it, but there is no point.
+fi
+
+# Is topic ever merged to next?  If so you should not be rebasing it.
+only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
+only_next_2=`git rev-list ^master           ${publish} | sort`
+if test "$only_next_1" = "$only_next_2"
+then
+	not_in_topic=`git rev-list "^$topic" master`
+	if test -z "$not_in_topic"
+	then
+		echo >&2 "$topic is already up to date with master"
+		exit 1 ;# we could allow it, but there is no point.
+	else
+		exit 0
+	fi
+else
+	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
+	/usr/bin/perl -e '
+		my $topic = $ARGV[0];
+		my $msg = "* $topic has commits already merged to public branch:\n";
+		my (%not_in_next) = map {
+			/^([0-9a-f]+) /;
+			($1 => 1);
+		} split(/\n/, $ARGV[1]);
+		for my $elem (map {
+				/^([0-9a-f]+) (.*)$/;
+				[$1 => $2];
+			} split(/\n/, $ARGV[2])) {
+			if (!exists $not_in_next{$elem->[0]}) {
+				if ($msg) {
+					print STDERR $msg;
+					undef $msg;
+				}
+				print STDERR " $elem->[1]\n";
+			}
+		}
+	' "$topic" "$not_in_next" "$not_in_master"
+	exit 1
+fi
+
+<<\DOC_END
+
+This sample hook safeguards topic branches that have been
+published from being rewound.
+
+The workflow assumed here is:
+
+ * Once a topic branch forks from "master", "master" is never
+   merged into it again (either directly or indirectly).
+
+ * Once a topic branch is fully cooked and merged into "master",
+   it is deleted.  If you need to build on top of it to correct
+   earlier mistakes, a new topic branch is created by forking at
+   the tip of the "master".  This is not strictly necessary, but
+   it makes it easier to keep your history simple.
+
+ * Whenever you need to test or publish your changes to topic
+   branches, merge them into "next" branch.
+
+The script, being an example, hardcodes the publish branch name
+to be "next", but it is trivial to make it configurable via
+$GIT_DIR/config mechanism.
+
+With this workflow, you would want to know:
+
+(1) ... if a topic branch has ever been merged to "next".  Young
+    topic branches can have stupid mistakes you would rather
+    clean up before publishing, and things that have not been
+    merged into other branches can be easily rebased without
+    affecting other people.  But once it is published, you would
+    not want to rewind it.
+
+(2) ... if a topic branch has been fully merged to "master".
+    Then you can delete it.  More importantly, you should not
+    build on top of it -- other people may already want to
+    change things related to the topic as patches against your
+    "master", so if you need further changes, it is better to
+    fork the topic (perhaps with the same name) afresh from the
+    tip of "master".
+
+Let's look at this example:
+
+		   o---o---o---o---o---o---o---o---o---o "next"
+		  /       /           /           /
+		 /   a---a---b A     /           /
+		/   /               /           /
+	       /   /   c---c---c---c B         /
+	      /   /   /             \         /
+	     /   /   /   b---b C     \       /
+	    /   /   /   /             \     /
+    ---o---o---o---o---o---o---o---o---o---o---o "master"
+
+
+A, B and C are topic branches.
+
+ * A has one fix since it was merged up to "next".
+
+ * B has finished.  It has been fully merged up to "master" and "next",
+   and is ready to be deleted.
+
+ * C has not merged to "next" at all.
+
+We would want to allow C to be rebased, refuse A, and encourage
+B to be deleted.
+
+To compute (1):
+
+	git rev-list ^master ^topic next
+	git rev-list ^master        next
+
+	if these match, topic has not merged in next at all.
+
+To compute (2):
+
+	git rev-list master..topic
+
+	if this is empty, it is fully merged to "master".
+
+DOC_END
+</file>
+
+<file path="ProveoWeb/.git/hooks/pre-receive.sample">
+#!/bin/sh
+#
+# An example hook script to make use of push options.
+# The example simply echoes all push options that start with 'echoback='
+# and rejects all pushes when the "reject" push option is used.
+#
+# To enable this hook, rename this file to "pre-receive".
+
+if test -n "$GIT_PUSH_OPTION_COUNT"
+then
+	i=0
+	while test "$i" -lt "$GIT_PUSH_OPTION_COUNT"
+	do
+		eval "value=\$GIT_PUSH_OPTION_$i"
+		case "$value" in
+		echoback=*)
+			echo "echo from the pre-receive-hook: ${value#*=}" >&2
+			;;
+		reject)
+			exit 1
+		esac
+		i=$((i + 1))
+	done
+fi
+</file>
+
+<file path="ProveoWeb/.git/hooks/prepare-commit-msg.sample">
+#!/bin/sh
+#
+# An example hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source.  The hook's purpose is to edit the commit
+# message file.  If the hook fails with a non-zero status,
+# the commit is aborted.
+#
+# To enable this hook, rename this file to "prepare-commit-msg".
+
+# This hook includes three examples. The first one removes the
+# "# Please enter the commit message..." help message.
+#
+# The second includes the output of "git diff --name-status -r"
+# into the message, just before the "git status" output.  It is
+# commented because it doesn't cope with --amend or with squashed
+# commits.
+#
+# The third example adds a Signed-off-by line to the message, that can
+# still be edited.  This is rarely a good idea.
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+/usr/bin/perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "$COMMIT_MSG_FILE"
+
+# case "$COMMIT_SOURCE,$SHA1" in
+#  ,|template,)
+#    /usr/bin/perl -i.bak -pe '
+#       print "\n" . `git diff --cached --name-status -r`
+# 	 if /^#/ && $first++ == 0' "$COMMIT_MSG_FILE" ;;
+#  *) ;;
+# esac
+
+# SOB=$(git var GIT_COMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# git interpret-trailers --in-place --trailer "$SOB" "$COMMIT_MSG_FILE"
+# if test -z "$COMMIT_SOURCE"
+# then
+#   /usr/bin/perl -i.bak -pe 'print "\n" if !$first_line++' "$COMMIT_MSG_FILE"
+# fi
+</file>
+
+<file path="ProveoWeb/.git/hooks/push-to-checkout.sample">
+#!/bin/sh
+
+# An example hook script to update a checked-out tree on a git push.
+#
+# This hook is invoked by git-receive-pack(1) when it reacts to git
+# push and updates reference(s) in its repository, and when the push
+# tries to update the branch that is currently checked out and the
+# receive.denyCurrentBranch configuration variable is set to
+# updateInstead.
+#
+# By default, such a push is refused if the working tree and the index
+# of the remote repository has any difference from the currently
+# checked out commit; when both the working tree and the index match
+# the current commit, they are updated to match the newly pushed tip
+# of the branch. This hook is to be used to override the default
+# behaviour; however the code below reimplements the default behaviour
+# as a starting point for convenient modification.
+#
+# The hook receives the commit with which the tip of the current
+# branch is going to be updated:
+commit=$1
+
+# It can exit with a non-zero status to refuse the push (when it does
+# so, it must not modify the index or the working tree).
+die () {
+	echo >&2 "$*"
+	exit 1
+}
+
+# Or it can make any necessary changes to the working tree and to the
+# index to bring them to the desired state when the tip of the current
+# branch is updated to the new commit, and exit with a zero status.
+#
+# For example, the hook can simply run git read-tree -u -m HEAD "$1"
+# in order to emulate git fetch that is run in the reverse direction
+# with git push, as the two-tree form of git read-tree -u -m is
+# essentially the same as git switch or git checkout that switches
+# branches while keeping the local changes in the working tree that do
+# not interfere with the difference between the branches.
+
+# The below is a more-or-less exact translation to shell of the C code
+# for the default behaviour for git's push-to-checkout hook defined in
+# the push_to_deploy() function in builtin/receive-pack.c.
+#
+# Note that the hook will be executed from the repository directory,
+# not from the working tree, so if you want to perform operations on
+# the working tree, you will have to adapt your code accordingly, e.g.
+# by adding "cd .." or using relative paths.
+
+if ! git update-index -q --ignore-submodules --refresh
+then
+	die "Up-to-date check failed"
+fi
+
+if ! git diff-files --quiet --ignore-submodules --
+then
+	die "Working directory has unstaged changes"
+fi
+
+# This is a rough translation of:
+#
+#   head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX
+if git cat-file -e HEAD 2>/dev/null
+then
+	head=HEAD
+else
+	head=$(git hash-object -t tree --stdin </dev/null)
+fi
+
+if ! git diff-index --quiet --cached --ignore-submodules $head --
+then
+	die "Working directory has staged changes"
+fi
+
+if ! git read-tree -u -m "$commit"
+then
+	die "Could not update working tree to new HEAD"
+fi
+</file>
+
+<file path="ProveoWeb/.git/hooks/sendemail-validate.sample">
+#!/bin/sh
+
+# An example hook script to validate a patch (and/or patch series) before
+# sending it via email.
+#
+# The hook should exit with non-zero status after issuing an appropriate
+# message if it wants to prevent the email(s) from being sent.
+#
+# To enable this hook, rename this file to "sendemail-validate".
+#
+# By default, it will only check that the patch(es) can be applied on top of
+# the default upstream branch without conflicts in a secondary worktree. After
+# validation (successful or not) of the last patch of a series, the worktree
+# will be deleted.
+#
+# The following config variables can be set to change the default remote and
+# remote ref that are used to apply the patches against:
+#
+#   sendemail.validateRemote (default: origin)
+#   sendemail.validateRemoteRef (default: HEAD)
+#
+# Replace the TODO placeholders with appropriate checks according to your
+# needs.
+
+validate_cover_letter () {
+	file="$1"
+	# TODO: Replace with appropriate checks (e.g. spell checking).
+	true
+}
+
+validate_patch () {
+	file="$1"
+	# Ensure that the patch applies without conflicts.
+	git am -3 "$file" || return
+	# TODO: Replace with appropriate checks for this patch
+	# (e.g. checkpatch.pl).
+	true
+}
+
+validate_series () {
+	# TODO: Replace with appropriate checks for the whole series
+	# (e.g. quick build, coding style checks, etc.).
+	true
+}
+
+# main -------------------------------------------------------------------------
+
+if test "$GIT_SENDEMAIL_FILE_COUNTER" = 1
+then
+	remote=$(git config --default origin --get sendemail.validateRemote) &&
+	ref=$(git config --default HEAD --get sendemail.validateRemoteRef) &&
+	worktree=$(mktemp --tmpdir -d sendemail-validate.XXXXXXX) &&
+	git worktree add -fd --checkout "$worktree" "refs/remotes/$remote/$ref" &&
+	git config --replace-all sendemail.validateWorktree "$worktree"
+else
+	worktree=$(git config --get sendemail.validateWorktree)
+fi || {
+	echo "sendemail-validate: error: failed to prepare worktree" >&2
+	exit 1
+}
+
+unset GIT_DIR GIT_WORK_TREE
+cd "$worktree" &&
+
+if grep -q "^diff --git " "$1"
+then
+	validate_patch "$1"
+else
+	validate_cover_letter "$1"
+fi &&
+
+if test "$GIT_SENDEMAIL_FILE_COUNTER" = "$GIT_SENDEMAIL_FILE_TOTAL"
+then
+	git config --unset-all sendemail.validateWorktree &&
+	trap 'git worktree remove -ff "$worktree"' EXIT &&
+	validate_series
+fi
+</file>
+
+<file path="ProveoWeb/.git/hooks/update.sample">
+#!/bin/sh
+#
+# An example hook script to block unannotated tags from entering.
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+#
+# To enable this hook, rename this file to "update".
+#
+# Config
+# ------
+# hooks.allowunannotated
+#   This boolean sets whether unannotated tags will be allowed into the
+#   repository.  By default they won't be.
+# hooks.allowdeletetag
+#   This boolean sets whether deleting tags will be allowed in the
+#   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
+# hooks.allowdeletebranch
+#   This boolean sets whether deleting branches will be allowed in the
+#   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
+#
+
+# --- Command line
+refname="$1"
+oldrev="$2"
+newrev="$3"
+
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+	echo "Don't run this script from the command line." >&2
+	echo " (if you want, you could supply GIT_DIR then run" >&2
+	echo "  $0 <ref> <oldrev> <newrev>)" >&2
+	exit 1
+fi
+
+if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
+	exit 1
+fi
+
+# --- Config
+allowunannotated=$(git config --type=bool hooks.allowunannotated)
+allowdeletebranch=$(git config --type=bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --type=bool hooks.denycreatebranch)
+allowdeletetag=$(git config --type=bool hooks.allowdeletetag)
+allowmodifytag=$(git config --type=bool hooks.allowmodifytag)
+
+# check for no description
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+case "$projectdesc" in
+"Unnamed repository"* | "")
+	echo "*** Project description file hasn't been set" >&2
+	exit 1
+	;;
+esac
+
+# --- Check types
+# if $newrev is 0000...0000, it's a commit to delete a ref.
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+if [ "$newrev" = "$zero" ]; then
+	newrev_type=delete
+else
+	newrev_type=$(git cat-file -t $newrev)
+fi
+
+case "$refname","$newrev_type" in
+	refs/tags/*,commit)
+		# un-annotated tag
+		short_refname=${refname##refs/tags/}
+		if [ "$allowunannotated" != "true" ]; then
+			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
+			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,delete)
+		# delete tag
+		if [ "$allowdeletetag" != "true" ]; then
+			echo "*** Deleting a tag is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,tag)
+		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,commit)
+		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,delete)
+		# delete branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/remotes/*,commit)
+		# tracking branch
+		;;
+	refs/remotes/*,delete)
+		# delete tracking branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	*)
+		# Anything else (is there anything else?)
+		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
+		exit 1
+		;;
+esac
+
+# --- Finished
+exit 0
+</file>
+
+<file path="ProveoWeb/.git/info/exclude">
+# git ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+# For a project mostly in C, the following would be a good set of
+# exclude patterns (uncomment them if you want to use them):
+# *.[oa]
+# *~
+</file>
+
+<file path="ProveoWeb/.git/logs/refs/heads/main">
+0000000000000000000000000000000000000000 d3d72c488aad3e2e30af3eb8d0bdadcc9e1d1ec3 Fabián Velázquez <flv3.7r@gmail.com> 1792282750 -0600	clone: from https://github.com/valeriarocha-svg/ProveoWeb.git
+</file>
+
+<file path="ProveoWeb/.git/logs/refs/remotes/origin/HEAD">
+0000000000000000000000000000000000000000 d3d72c488aad3e2e30af3eb8d0bdadcc9e1d1ec3 Fabián Velázquez <flv3.7r@gmail.com> 1792282750 -0600	clone: from https://github.com/valeriarocha-svg/ProveoWeb.git
+</file>
+
+<file path="ProveoWeb/.git/logs/HEAD">
+0000000000000000000000000000000000000000 d3d72c488aad3e2e30af3eb8d0bdadcc9e1d1ec3 Fabián Velázquez <flv3.7r@gmail.com> 1792282750 -0600	clone: from https://github.com/valeriarocha-svg/ProveoWeb.git
+</file>
+
+<file path="ProveoWeb/.git/refs/heads/main">
+d3d72c488aad3e2e30af3eb8d0bdadcc9e1d1ec3
+</file>
+
+<file path="ProveoWeb/.git/refs/remotes/origin/HEAD">
+ref: refs/remotes/origin/main
+</file>
+
+<file path="ProveoWeb/.git/config">
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/valeriarocha-svg/ProveoWeb.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+	vscode-merge-base = origin/main
+</file>
+
+<file path="ProveoWeb/.git/description">
+Unnamed repository; edit this file 'description' to name the repository.
+</file>
+
+<file path="ProveoWeb/.git/HEAD">
+ref: refs/heads/main
+</file>
+
+<file path="ProveoWeb/.git/packed-refs">
+# pack-refs with: peeled fully-peeled sorted 
+599c2f4ce9bd5b99e8035596e152565c661f0f8e refs/remotes/origin/develop
+1741551dc4d72c1df14e93cb6e941954081e0a9d refs/remotes/origin/feature/correcciones-a-bdd
+8d4a242337edbe1f9a0d9377098659cad83b64a2 refs/remotes/origin/feature/db-indices-zonas
+07d89222625545fbad699f95c355b9c317646cfb refs/remotes/origin/feature/db-migracion-mysql
+bbb14c226cb71585ccaae65fe70e04b5de0d7b7c refs/remotes/origin/feature/hu01-registro-login
+b7b7610ba46f59f031ff926d3a7275562a2bac99 refs/remotes/origin/feature/hu04-layout
+af558c12c2b8285091b68f32f3f51675d8e05ceb refs/remotes/origin/feature/hu05-busqueda-zona
+2ae434f40eec1b8e11bdd7ff6f16d54428787a66 refs/remotes/origin/feature/hu06-07-busqueda-perfiles
+fdf0579c27da5cbe121210d293b60fadbd53a3a9 refs/remotes/origin/feature/hu06-listado-directorio
+fd0d8c3607e1b2aaeb30530a62c9922f2a022e13 refs/remotes/origin/fix/auth-end-to-end
+d3d72c488aad3e2e30af3eb8d0bdadcc9e1d1ec3 refs/remotes/origin/main
+</file>
+
+<file path="ProveoWeb/backend/migrations/.gitkeep">
+
+</file>
+
+<file path="ProveoWeb/backend/migrations/001_esquema_mysql.sql">
+CREATE DATABASE IF NOT EXISTS proveo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE proveo;
+
+-- 1. Tabla de Usuarios (UUID generado desde Node.js o MySQL)
+CREATE TABLE IF NOT EXISTS usuarios (
+    id VARCHAR(36) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20) NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('cliente', 'proveedor', 'administrador') NOT NULL,
+    estatus VARCHAR(20) DEFAULT 'activo',
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY usuarios_email_unique_idx (email),
+    UNIQUE KEY usuarios_telefono_unique_idx (telefono)
+);
+
+-- 2. Tabla de Perfiles de Proveedor (con todas las columnas de tus 3 migraciones)
+-- Nota: fotos_trabajo cambia de TEXT[] (Postgres) a JSON (MySQL)
+CREATE TABLE IF NOT EXISTS perfiles_proveedor (
+    usuario_id VARCHAR(36) PRIMARY KEY,
+    nombre_negocio VARCHAR(150) NULL,
+    tipo_servicio VARCHAR(150) NULL,
+    formacion VARCHAR(500) NULL,
+    servicio_domicilio BOOLEAN NULL,
+    colonia VARCHAR(150) NULL,
+    codigo_postal VARCHAR(5) NULL,
+    titulo_profesional VARCHAR(150) NULL,
+    descripcion TEXT NULL,
+    telefono VARCHAR(20) NULL,
+    foto_url VARCHAR(255) NULL,
+    foto_perfil_url VARCHAR(500) NULL,
+    fotos_trabajo JSON NOT NULL,
+    solo_cotizacion BOOLEAN NULL,
+    costo_aproximado DECIMAL(10, 2) NULL,
+    direccion_maps TEXT NULL,
+    promedio_calificacion DECIMAL(3, 2) DEFAULT 0.00,
+    total_resenas INT DEFAULT 0,
+    latitud DOUBLE NULL,
+    longitud DOUBLE NULL,
+    CONSTRAINT fk_perfil_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- 3. Tablas de Catálogo, Solicitudes, Chat y Reseñas (listas para siguientes fases)
+CREATE TABLE IF NOT EXISTS categorias (
+    id VARCHAR(36) PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS proveedor_categorias (
+    proveedor_id VARCHAR(36) NOT NULL,
+    categoria_id VARCHAR(36) NOT NULL,
+    PRIMARY KEY (proveedor_id, categoria_id),
+    CONSTRAINT fk_pc_proveedor FOREIGN KEY (proveedor_id) REFERENCES perfiles_proveedor(usuario_id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS servicios (
+    id VARCHAR(36) PRIMARY KEY,
+    proveedor_id VARCHAR(36) NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT NULL,
+    precio_referencia DECIMAL(10, 2) NULL,
+    CONSTRAINT fk_servicio_proveedor FOREIGN KEY (proveedor_id) REFERENCES perfiles_proveedor(usuario_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS solicitudes (
+    id VARCHAR(36) PRIMARY KEY,
+    cliente_id VARCHAR(36) NOT NULL,
+    proveedor_id VARCHAR(36) NOT NULL,
+    servicio_id VARCHAR(36) NULL,
+    descripcion TEXT NOT NULL,
+    fecha_servicio DATE NULL,
+    costo_acordado DECIMAL(10, 2) NULL,
+    estado ENUM('pendiente', 'aceptada', 'rechazada', 'en_proceso', 'finalizada', 'cancelada') DEFAULT 'pendiente',
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_solicitud_cliente FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
+    CONSTRAINT fk_solicitud_proveedor FOREIGN KEY (proveedor_id) REFERENCES perfiles_proveedor(usuario_id),
+    CONSTRAINT fk_solicitud_servicio FOREIGN KEY (servicio_id) REFERENCES servicios(id),
+    CONSTRAINT chk_no_autocontratacion CHECK (cliente_id <> proveedor_id),
+    INDEX idx_solic_participantes (cliente_id, proveedor_id, estado)
+);
+
+CREATE TABLE IF NOT EXISTS mensajes_chat (
+    id VARCHAR(36) PRIMARY KEY,
+    solicitud_id VARCHAR(36) NOT NULL,
+    emisor_id VARCHAR(36) NOT NULL,
+    contenido TEXT NOT NULL,
+    creado_en TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+    leido_en TIMESTAMP NULL,
+    CONSTRAINT fk_chat_solicitud FOREIGN KEY (solicitud_id) REFERENCES solicitudes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_chat_emisor FOREIGN KEY (emisor_id) REFERENCES usuarios(id),
+    INDEX idx_mensajes_solic (solicitud_id, creado_en)
+);
+
+CREATE TABLE IF NOT EXISTS resenas (
+    id VARCHAR(36) PRIMARY KEY,
+    solicitud_id VARCHAR(36) UNIQUE NOT NULL,
+    calificacion SMALLINT NOT NULL CHECK (calificacion BETWEEN 1 AND 5),
+    comentario TEXT NULL,
+    visible BOOLEAN DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_resena_solicitud FOREIGN KEY (solicitud_id) REFERENCES solicitudes(id) ON DELETE CASCADE
+);
+</file>
+
+<file path="ProveoWeb/backend/src/controllers/.gitkeep">
+
+</file>
+
+<file path="ProveoWeb/backend/src/controllers/authController.js">
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../db');
+const { normalizeMexicanPhone } = require('../utils/mexicanPhone');
+const { validatePassword } = require('../utils/passwordPolicy');
+
+const parseFotos = (raw) => {
+  if (Array.isArray(raw)) return raw;
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+};
+
+// 1. Registrar nuevo usuario (Cliente o Proveedor)
+const registrar = async (req, res, next) => {
+  try {
+    const { nombre, email, telefono, password, rol } = req.body;
+    const nombreLimpio = String(nombre || '').trim();
+    const emailLimpio = String(email || '').trim().toLowerCase();
+    const rolLimpio = rol === 'proveedor' ? 'proveedor' : 'cliente';
+
+    const telefonoNormalizado = normalizeMexicanPhone(telefono);
+    if (!telefonoNormalizado) {
+      return res.status(400).json({ error: 'Ingresa un teléfono mexicano válido de 10 dígitos.' });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        error: 'La contraseña debe tener entre 10 y 18 caracteres, incluir una mayúscula, un número y un símbolo.',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const nuevoId = crypto.randomUUID();
+
+    await db.transaction(async (tx) => {
+      await tx.query(
+        `INSERT INTO usuarios (id, nombre, email, telefono, password_hash, rol, estatus)
+         VALUES (?, ?, ?, ?, ?, ?, 'activo')`,
+        [nuevoId, nombreLimpio, emailLimpio, telefonoNormalizado, passwordHash, rolLimpio]
+      );
+
+      if (rolLimpio === 'proveedor') {
+        await tx.query(
+          `INSERT INTO perfiles_proveedor (usuario_id, telefono, fotos_trabajo)
+           VALUES (?, ?, ?)`,
+          [nuevoId, telefonoNormalizado, '[]']
+        );
+      }
+    });
+
+    return res.status(201).json({
+      mensaje: 'Registro exitoso. Inicia sesión para continuar.',
+      user: { id: nuevoId, nombre: nombreLimpio, email: emailLimpio, rol: rolLimpio },
+    });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'El correo o el teléfono ya están registrados en otra cuenta.' });
+    }
+    next(error);
+  }
+};
+
+// 2. Iniciar sesión
+const iniciarSesion = async (req, res, next) => {
+  try {
+    const { email, password, rol } = req.body;
+    const emailLimpio = String(email || '').trim().toLowerCase();
+
+    const result = await db.query(
+      `SELECT id, nombre, email, telefono, password_hash, rol, estatus
+       FROM usuarios WHERE LOWER(TRIM(email)) = ? LIMIT 1`,
+      [emailLimpio]
+    );
+
+    const usuario = result.rows[0];
+    if (!usuario) {
+      return res.status(401).json({ error: 'Credenciales inválidas.' });
+    }
+
+    const passwordValido = await bcrypt.compare(String(password || ''), usuario.password_hash);
+    if (!passwordValido) {
+      return res.status(401).json({ error: 'Credenciales inválidas.' });
+    }
+
+    if (rol && usuario.rol !== rol) {
+      return res.status(403).json({
+        error: `Esta cuenta está registrada como ${usuario.rol}. Cambia la pestaña de acceso.`,
+      });
+    }
+
+    const token = jwt.sign(
+      { sub: usuario.id, id: usuario.id, rol: usuario.rol },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.status(200).json({
+      token,
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        rol: usuario.rol,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 3. Obtener toda la información del perfil (Cliente o Proveedor)
+const obtenerMiCuenta = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user.sub;
+    const userResult = await db.query(
+      `SELECT id, nombre, email, telefono, rol, estatus, creado_en
+       FROM usuarios WHERE id = ? LIMIT 1`,
+      [userId]
+    );
+
+    const usuario = userResult.rows[0];
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    let perfilProveedor = null;
+    if (usuario.rol === 'proveedor') {
+      const provResult = await db.query(
+        `SELECT nombre_negocio, tipo_servicio, formacion, descripcion,
+                servicio_domicilio, colonia, codigo_postal, foto_perfil_url,
+                fotos_trabajo, solo_cotizacion, costo_aproximado, direccion_maps,
+                telefono, promedio_calificacion, total_resenas
+         FROM perfiles_proveedor WHERE usuario_id = ? LIMIT 1`,
+        [userId]
+      );
+      if (provResult.rows[0]) {
+        const p = provResult.rows[0];
+        perfilProveedor = {
+          ...p,
+          servicio_domicilio: p.servicio_domicilio === null ? null : Boolean(p.servicio_domicilio),
+          solo_cotizacion: Boolean(p.solo_cotizacion),
+          fotos_trabajo: parseFotos(p.fotos_trabajo),
+        };
+      }
+    }
+
+    return res.status(200).json({
+      usuario,
+      perfil_proveedor: perfilProveedor,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 4. Eliminar por completo la cuenta (Cliente o Proveedor)
+const eliminarMiCuenta = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user.sub;
+
+    await db.transaction(async (tx) => {
+      await tx.query(`DELETE FROM perfiles_proveedor WHERE usuario_id = ?`, [userId]);
+      await tx.query(`DELETE FROM usuarios WHERE id = ?`, [userId]);
+    });
+
+    return res.status(200).json({ mensaje: 'Tu cuenta y perfil han sido eliminados permanentemente.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  registrar,
+  iniciarSesion,
+  obtenerMiCuenta,
+  eliminarMiCuenta,
+};
+</file>
+
+<file path="ProveoWeb/backend/src/controllers/proveedorController.js">
+const db = require('../db');
+const proveedorRepo = require('../repositories/proveedorRepository');
+const { normalizeMexicanPhone } = require('../utils/mexicanPhone');
+
+const parseFotos = (raw) => {
+  if (Array.isArray(raw)) return raw;
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+};
+
+// 1. Catálogo público
+const obtenerProveedores = async (req, res, next) => {
+  try {
+    const servicio = typeof req.query.cat === 'string' ? req.query.cat.trim() : '';
+    const zona = typeof req.query.zona === 'string' ? req.query.zona.trim() : '';
+    const proveedores = await proveedorRepo.buscarProveedores(servicio, zona);
+    return res.status(200).json({ exito: true, datos: proveedores });
+  } catch (error) { next(error); }
+};
+
+// 2. Obtener perfil del proveedor autenticado (Corrige el error 500 en /perfil)
+const obtenerPerfil = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user.sub;
+    const result = await db.query(
+      `SELECT u.nombre, u.email, p.*
+       FROM usuarios u
+       LEFT JOIN perfiles_proveedor p ON p.usuario_id = u.id
+       WHERE u.id = ? LIMIT 1`,
+      [userId]
+    );
+
+    const row = result.rows[0];
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado.' });
+
+    return res.status(200).json({
+      ...row,
+      servicio_domicilio: row.servicio_domicilio === null ? null : Boolean(row.servicio_domicilio),
+      solo_cotizacion: Boolean(row.solo_cotizacion),
+      fotos_trabajo: parseFotos(row.fotos_trabajo),
+    });
+  } catch (error) { next(error); }
+};
+
+// 3. Obtener detalle de perfil público por ID
+const obtenerDetallePerfil = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query(
+      `SELECT u.nombre, p.*
+       FROM usuarios u
+       JOIN perfiles_proveedor p ON p.usuario_id = u.id
+       WHERE u.id = ? LIMIT 1`,
+      [id]
+    );
+
+    const row = result.rows[0];
+    if (!row) return res.status(404).json({ error: 'Proveedor no encontrado.' });
+
+    return res.status(200).json({
+      exito: true,
+      datos: {
+        ...row,
+        servicio_domicilio: row.servicio_domicilio === null ? null : Boolean(row.servicio_domicilio),
+        solo_cotizacion: Boolean(row.solo_cotizacion),
+        fotos_trabajo: parseFotos(row.fotos_trabajo),
+      },
+    });
+  } catch (error) { next(error); }
+};
+
+// 4. Actualizar datos del perfil del proveedor
+const actualizarPerfil = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user.sub;
+    const {
+      nombre,
+      nombre_negocio,
+      tipo_servicio,
+      formacion,
+      descripcion,
+      servicio_domicilio,
+      colonia,
+      codigo_postal,
+      telefono,
+      solo_cotizacion,
+      costo_aproximado,
+      direccion_maps,
+    } = req.body;
+
+    const telefonoNormalizado = telefono ? normalizeMexicanPhone(telefono) : null;
+    if (telefono && !telefonoNormalizado) {
+      return res.status(400).json({ error: 'Teléfono mexicano inválido (debe tener 10 dígitos).' });
+    }
+
+    await db.transaction(async (tx) => {
+      if (nombre) {
+        await tx.query(`UPDATE usuarios SET nombre = ? WHERE id = ?`, [String(nombre).trim(), userId]);
+      }
+      if (telefonoNormalizado) {
+        await tx.query(`UPDATE usuarios SET telefono = ? WHERE id = ?`, [telefonoNormalizado, userId]);
+      }
+
+      await tx.query(
+        `UPDATE perfiles_proveedor
+         SET nombre_negocio = ?, tipo_servicio = ?, formacion = ?, descripcion = ?,
+             servicio_domicilio = ?, colonia = ?, codigo_postal = ?,
+             telefono = COALESCE(?, telefono), solo_cotizacion = ?, costo_aproximado = ?,
+             direccion_maps = ?
+         WHERE usuario_id = ?`,
+        [
+          nombre_negocio ? String(nombre_negocio).trim() : null,
+          tipo_servicio ? String(tipo_servicio).trim() : null,
+          formacion ? String(formacion).trim() : null,
+          descripcion ? String(descripcion).trim() : null,
+          typeof servicio_domicilio === 'boolean' ? (servicio_domicilio ? 1 : 0) : null,
+          colonia ? String(colonia).trim() : null,
+          codigo_postal ? String(codigo_postal).trim() : null,
+          telefonoNormalizado,
+          solo_cotizacion ? 1 : 0,
+          solo_cotizacion ? null : Number(costo_aproximado) || 0,
+          direccion_maps ? String(direccion_maps).trim() : null,
+          userId,
+        ]
+      );
+    });
+
+    return res.status(200).json({ mensaje: 'Perfil actualizado correctamente.' });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ese teléfono ya está asociado a otra cuenta.' });
+    }
+    next(error);
+  }
+};
+
+// 5. Subir fotos de perfil y portafolio
+const subirImagenesPerfil = async (req, res, next) => {
+  try {
+    const userId = req.user.id || req.user.sub;
+    const fotoPerfil = req.files?.foto_perfil?.[0]?.publicUrl || null;
+    const fotosTrabajo = req.files?.fotos_trabajo?.map((f) => f.publicUrl) || [];
+
+    if (fotoPerfil) {
+      await db.query(`UPDATE perfiles_proveedor SET foto_perfil_url = ? WHERE usuario_id = ?`, [fotoPerfil, userId]);
+    }
+    if (fotosTrabajo.length > 0) {
+      await db.query(`UPDATE perfiles_proveedor SET fotos_trabajo = ? WHERE usuario_id = ?`, [JSON.stringify(fotosTrabajo), userId]);
+    }
+
+    return res.status(200).json({ mensaje: 'Imágenes actualizadas correctamente.' });
+  } catch (error) { next(error); }
+};
+
+module.exports = {
+  obtenerProveedores,
+  obtenerPerfil,
+  obtenerDetallePerfil,
+  actualizarPerfil,
+  subirImagenesPerfil,
+};
+</file>
+
+<file path="ProveoWeb/backend/src/middlewares/auth.js">
+const jwt = require('jsonwebtoken');
+
+// 1. Guardia que verifica que el gafete (Token) sea válido
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Acceso denegado. Token no proporcionado.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('La variable JWT_SECRET no está configurada.');
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = { id: decoded.sub, rol: decoded.rol }; // Guardamos los datos del usuario en la petición
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: 'Token inválido o expirado.' });
+  }
+};
+
+// 2. Guardia que verifica si tienes el tipo de cuenta correcta (Ej. 'proveedor')
+const checkRole = (rolesPermitidos) => {
+  return (req, res, next) => {
+    if (!req.user || !rolesPermitidos.includes(req.user.rol)) {
+      return res.status(403).json({ error: 'No tienes permisos para acceder a esta ruta.' });
+    }
+    next();
+  };
+};
+
+module.exports = { verifyToken, checkRole };
+</file>
+
+<file path="ProveoWeb/backend/src/middlewares/profileImageUpload.js">
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// 1. Aseguramos que la carpeta física exista en el servidor
+const uploadDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// 2. Configuramos cómo se guardan las fotos
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    // Inventa un nombre único para que las fotos no se encimen
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// 3. Filtro de seguridad (Solo admite imágenes)
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WEBP).'), false);
+  }
+};
+
+// Instancia de Multer con los límites requeridos (1 foto de perfil y hasta 5 de trabajo)
+const upload = multer({ 
+  storage, 
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB máximo por foto
+  fileFilter 
+}).fields([
+  { name: 'foto_perfil', maxCount: 1 },
+  { name: 'fotos_trabajo', maxCount: 5 }
+]);
+
+// 4. El Middleware real (La FUNCIÓN que Express está pidiendo)
+const uploadProfile = (req, res, next) => {
+  upload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: 'Error al procesar imágenes: ' + err.message });
+    }
+    
+    // Inyectamos la URL pública que tu Controlador está esperando guardar en MySQL
+    if (req.files) {
+      if (req.files.foto_perfil) {
+        req.files.foto_perfil[0].publicUrl = '/uploads/' + req.files.foto_perfil[0].filename;
+      }
+      if (req.files.fotos_trabajo) {
+        req.files.fotos_trabajo.forEach(file => {
+          file.publicUrl = '/uploads/' + file.filename;
+        });
+      }
+    }
+    next();
+  });
+};
+
+module.exports = uploadProfile;
+</file>
+
+<file path="ProveoWeb/backend/src/middlewares/roles.js">
+module.exports = (...rolesPermitidos) => (req, res, next) => {
+  if (!req.user || !rolesPermitidos.includes(req.user.rol)) {
+    return res.status(403).json({ error: 'No tienes permiso para acceder a este recurso.' });
+  }
+  return next();
+};
+</file>
+
+<file path="ProveoWeb/backend/src/middlewares/validate.js">
+const validarEsquema = (schema) => (req, res, next) => {
+  // Si por alguna razón el esquema no existe, dejamos pasar al controlador
+  if (!schema || typeof schema.safeParse !== 'function') {
+    return next();
+  }
+
+  const resultado = schema.safeParse(req.body);
+
+  if (!resultado.success) {
+    // Compatible con cualquier versión de Zod (issues o errors)
+    const listaErrores = resultado.error?.issues || resultado.error?.errors || [];
+    const mensajeError = listaErrores[0]?.message || 'Los datos enviados no son válidos.';
+    return res.status(400).json({ error: mensajeError });
+  }
+
+  req.body = resultado.data;
+  next();
+};
+
+module.exports = validarEsquema;
+</file>
+
+<file path="ProveoWeb/backend/src/repositories/.gitkeep">
+
+</file>
+
+<file path="ProveoWeb/backend/src/repositories/proveedorRepository.js">
+const db = require('../db');
+
+const parseFotos = (fotos) => {
+  if (Array.isArray(fotos)) return fotos;
+  if (typeof fotos === 'string') {
+    try { return JSON.parse(fotos); } catch { return []; }
+  }
+  return [];
+};
+
+const buscarProveedores = async (servicio = '', zona = '') => {
+  const result = await db.query(
+    `SELECT p.usuario_id AS proveedor_id, u.nombre, p.nombre_negocio,
+            p.tipo_servicio, p.formacion, p.descripcion, p.servicio_domicilio,
+            p.colonia, p.codigo_postal, p.foto_perfil_url, p.fotos_trabajo,
+            p.solo_cotizacion, p.costo_aproximado, p.direccion_maps,
+            p.telefono, p.promedio_calificacion, p.total_resenas
+     FROM perfiles_proveedor p
+     JOIN usuarios u ON u.id = p.usuario_id
+     WHERE u.estatus = 'activo'
+       AND p.tipo_servicio IS NOT NULL
+       AND p.tipo_servicio <> ''
+       AND (? = '' OR p.tipo_servicio LIKE ? OR p.nombre_negocio LIKE ? OR p.descripcion LIKE ?)
+       AND (? = '' OR p.colonia LIKE ? OR p.codigo_postal LIKE ?)
+     ORDER BY p.promedio_calificacion DESC, u.creado_en DESC`,
+    [
+      servicio, `%${servicio}%`, `%${servicio}%`, `%${servicio}%`,
+      zona, `%${zona}%`, `%${zona}%`
+    ]
+  );
+
+  return result.rows.map((row) => ({
+    ...row,
+    servicio_domicilio: row.servicio_domicilio === null ? null : Boolean(row.servicio_domicilio),
+    solo_cotizacion: row.solo_cotizacion === null ? null : Boolean(row.solo_cotizacion),
+    fotos_trabajo: parseFotos(row.fotos_trabajo),
+  }));
+};
+
+const obtenerPerfil = async (usuarioId) => {
+  const result = await db.query(
+    `SELECT u.nombre, p.nombre_negocio, p.tipo_servicio, p.formacion,
+            p.servicio_domicilio, p.colonia, p.codigo_postal, p.foto_perfil_url,
+            p.fotos_trabajo, p.solo_cotizacion, p.costo_aproximado,
+            p.direccion_maps, p.descripcion, p.telefono
+     FROM perfiles_proveedor p
+     JOIN usuarios u ON u.id = p.usuario_id
+     WHERE p.usuario_id = ?`,
+    [usuarioId]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    ...row,
+    servicio_domicilio: row.servicio_domicilio === null ? null : Boolean(row.servicio_domicilio),
+    solo_cotizacion: row.solo_cotizacion === null ? null : Boolean(row.solo_cotizacion),
+    fotos_trabajo: parseFotos(row.fotos_trabajo),
+  };
+};
+
+const guardarPerfil = async (usuarioId, perfil) => {
+  return db.transaction(async (client) => {
+    await client.query(
+      'UPDATE usuarios SET nombre = ?, telefono = ? WHERE id = ?',
+      [perfil.nombre, perfil.telefono, usuarioId]
+    );
+
+    const fotosJson = JSON.stringify(perfil.fotos_trabajo || []);
+
+    await client.query(
+      `INSERT INTO perfiles_proveedor (
+         usuario_id, telefono, nombre_negocio, tipo_servicio, formacion,
+         servicio_domicilio, colonia, codigo_postal, foto_perfil_url,
+         fotos_trabajo, solo_cotizacion, costo_aproximado, direccion_maps, descripcion
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         nombre_negocio = VALUES(nombre_negocio),
+         tipo_servicio = VALUES(tipo_servicio),
+         formacion = VALUES(formacion),
+         servicio_domicilio = VALUES(servicio_domicilio),
+         colonia = VALUES(colonia),
+         codigo_postal = VALUES(codigo_postal),
+         foto_perfil_url = VALUES(foto_perfil_url),
+         fotos_trabajo = VALUES(fotos_trabajo),
+         solo_cotizacion = VALUES(solo_cotizacion),
+         costo_aproximado = VALUES(costo_aproximado),
+         direccion_maps = VALUES(direccion_maps),
+         descripcion = VALUES(descripcion),
+         telefono = VALUES(telefono)`,
+      [
+        usuarioId,
+        perfil.telefono,
+        perfil.nombre_negocio,
+        perfil.tipo_servicio,
+        perfil.formacion,
+        perfil.servicio_domicilio,
+        perfil.colonia,
+        perfil.codigo_postal,
+        perfil.foto_perfil_url,
+        fotosJson,
+        perfil.solo_cotizacion,
+        perfil.costo_aproximado,
+        perfil.direccion_maps,
+        perfil.descripcion,
+      ]
+    );
+
+    return {
+      nombre: perfil.nombre,
+      nombre_negocio: perfil.nombre_negocio,
+      tipo_servicio: perfil.tipo_servicio,
+      formacion: perfil.formacion,
+      servicio_domicilio: perfil.servicio_domicilio,
+      colonia: perfil.colonia,
+      codigo_postal: perfil.codigo_postal,
+      foto_perfil_url: perfil.foto_perfil_url,
+      fotos_trabajo: perfil.fotos_trabajo || [],
+      solo_cotizacion: perfil.solo_cotizacion,
+      costo_aproximado: perfil.costo_aproximado,
+      direccion_maps: perfil.direccion_maps,
+      descripcion: perfil.descripcion,
+      telefono: perfil.telefono,
+    };
+  });
+};
+
+module.exports = { buscarProveedores, obtenerPerfil, guardarPerfil };
+</file>
+
+<file path="ProveoWeb/backend/src/routes/.gitkeep">
+
+</file>
+
+<file path="ProveoWeb/backend/src/routes/authRoutes.js">
+const express = require('express');
+const router = express.Router();
+const {
+  registrar,
+  iniciarSesion,
+  obtenerMiCuenta,
+  eliminarMiCuenta,
+} = require('../controllers/authController');
+const { verifyToken } = require('../middlewares/auth');
+const validarEsquema = require('../middlewares/validate');
+const { registroSchema, loginSchema } = require('../validaciones/auth.schema');
+
+// Rutas públicas
+router.post('/registro', validarEsquema(registroSchema), registrar);
+router.post('/login', validarEsquema(loginSchema), iniciarSesion);
+
+// Rutas protegidas para ver y eliminar el perfil (Clientes y Proveedores)
+router.get('/mi-cuenta', verifyToken, obtenerMiCuenta);
+router.delete('/mi-cuenta', verifyToken, eliminarMiCuenta);
+
+module.exports = router;
+</file>
+
+<file path="ProveoWeb/backend/src/routes/proveedorRoutes.js">
+const express = require('express');
+const router = express.Router();
+const {
+  obtenerProveedores,
+  obtenerPerfil,
+  obtenerDetallePerfil,
+  actualizarPerfil,
+  subirImagenesPerfil
+} = require('../controllers/proveedorController');
+
+const { verifyToken, checkRole } = require('../middlewares/auth');
+const uploadProfile = require('../middlewares/profileImageUpload');
+const validarEsquema = require('../middlewares/validate');
+const { perfilProveedorSchema } = require('../validaciones/proveedor.schema');
+
+router.get('/buscar', obtenerProveedores);
+router.get('/perfil', verifyToken, checkRole(['proveedor']), obtenerPerfil);
+router.put('/perfil', verifyToken, checkRole(['proveedor']), validarEsquema(perfilProveedorSchema), actualizarPerfil);
+router.post('/perfil/imagenes', verifyToken, checkRole(['proveedor']), uploadProfile, subirImagenesPerfil);
+router.get('/:id', obtenerDetallePerfil);
+
+module.exports = router;
+</file>
+
+<file path="ProveoWeb/backend/src/services/resena_service.js">
+
+</file>
+
+<file path="ProveoWeb/backend/src/services/solicitud_service.js">
+
+</file>
+
+<file path="ProveoWeb/backend/src/sockets/chat.js">
+
+</file>
+
+<file path="ProveoWeb/backend/src/utils/mexicanPhone.js">
+const normalizeMexicanPhone = (value) => {
+  if (typeof value !== 'string') return null;
+
+  const phone = value.trim();
+  if (!phone) return null;
+  if (!/^\+?[\d\s().-]+$/.test(phone)) return null;
+
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) return `+52${digits}`;
+  if (digits.length === 12 && digits.startsWith('52')) return `+${digits}`;
+
+  return null;
+};
+
+module.exports = { normalizeMexicanPhone };
+</file>
+
+<file path="ProveoWeb/backend/src/utils/passwordPolicy.js">
+const validatePassword = (password) => {
+  if (typeof password !== 'string') return false;
+  const length = Array.from(password).length;
+
+  return length >= 10 &&
+    length <= 18 &&
+    /[A-Z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9\s]/.test(password);
+};
+
+module.exports = { validatePassword };
+</file>
+
+<file path="ProveoWeb/backend/src/validaciones/auth.schema.js">
+// backend/src/validations/auth.schema.js
+const { z } = require('zod');
+
+const registroSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio').max(100),
+  email: z.string().email('Ingresa un correo electrónico válido').max(150),
+  telefono: z.string().regex(/^(?:\+?52[\s().-]*)?(?:[0-9][\s().-]*){10}$/, 'Teléfono inválido'),
+  password: z.string().min(10).max(18),
+  rol: z.enum(['cliente', 'proveedor'])
+});
+
+module.exports = { registroSchema };
+</file>
+
+<file path="ProveoWeb/backend/src/validaciones/proveedor.schema.js">
+const { z } = require('zod');
+
+const perfilProveedorSchema = z.object({
+  nombre_negocio: z.string().max(150, 'El nombre del negocio es muy largo').optional().nullable(),
+  tipo_servicio: z.string().max(100).optional().nullable(),
+  formacion: z.string().max(255).optional().nullable(),
+  descripcion: z.string().max(1000).optional().nullable(),
+  servicio_domicilio: z.boolean().optional().nullable(),
+  colonia: z.string().max(100).optional().nullable(),
+  codigo_postal: z.string().regex(/^\d{5}$/, 'El código postal debe tener exactamente 5 números').optional().nullable(),
+  telefono: z.string().regex(/^(?:\+?52[\s().-]*)?(?:[0-9][\s().-]*){10}$/, 'Teléfono inválido').optional().nullable(),
+  solo_cotizacion: z.boolean().optional().nullable(),
+  costo_aproximado: z.number().nonnegative('El costo no puede ser negativo').optional().nullable(),
+  direccion_maps: z.string().url('Ingresa un enlace válido de Google Maps').or(z.literal('')).optional().nullable()
+});
+
+module.exports = { perfilProveedorSchema };
+</file>
+
+<file path="ProveoWeb/backend/src/app.js">
+
+</file>
+
+<file path="ProveoWeb/backend/src/db.js">
+const mysql = require('mysql2/promise');
+
+const pool = mysql.createPool(
+  process.env.DATABASE_URL || {
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: Number(process.env.DB_PORT) || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'proveo',
+    waitForConnections: true,
+    connectionLimit: 10,
+  }
+);
+
+const wrapClient = (connection) => ({
+  query: async (sql, params = []) => {
+    const [rows] = await connection.execute(sql, params);
+    return { rows };
+  },
+});
+
+module.exports = {
+  query: async (sql, params = []) => {
+    const [rows] = await pool.execute(sql, params);
+    return { rows };
+  },
+  transaction: async (callback) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const result = await callback(wrapClient(connection));
+      await connection.commit();
+      return result;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+};
+</file>
+
+<file path="ProveoWeb/backend/test/mexicanPhone.test.js">
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { normalizeMexicanPhone } = require('../src/utils/mexicanPhone');
+
+test('normalizes Mexican ten-digit numbers to +52 format', () => {
+  assert.equal(normalizeMexicanPhone('5512345678'), '+525512345678');
+  assert.equal(normalizeMexicanPhone('(55) 1234-5678'), '+525512345678');
+});
+
+test('accepts the optional Mexican country code', () => {
+  assert.equal(normalizeMexicanPhone('+52 55 1234 5678'), '+525512345678');
+  assert.equal(normalizeMexicanPhone('52-55-1234-5678'), '+525512345678');
+});
+
+test('rejects values that are not Mexican ten-digit numbers', () => {
+  for (const phone of ['123456789', '12345678901', '+1 555 123 4567', '55ABC45678', '++525512345678']) {
+    assert.equal(normalizeMexicanPhone(phone), null, `expected ${phone} to be rejected`);
+  }
+});
+
+test('allows an empty value only for optional profile phone numbers', () => {
+  assert.equal(normalizeMexicanPhone(''), null);
+  assert.equal(normalizeMexicanPhone('   '), null);
+});
+</file>
+
+<file path="ProveoWeb/backend/test/passwordPolicy.test.js">
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { validatePassword } = require('../src/utils/passwordPolicy');
+
+test('accepts passwords meeting the policy at the minimum and maximum lengths', () => {
+  assert.equal(validatePassword('Abcdefg1!x'), true);
+  assert.equal(validatePassword('Abcdefghijk1!xyz'), true);
+});
+
+test('rejects passwords outside the permitted length', () => {
+  assert.equal(validatePassword('Abcdef1!x'), false);
+  assert.equal(validatePassword('Abcdefghijklm1!xyzz'), false);
+});
+
+test('requires an uppercase letter, a number, and a symbol', () => {
+  assert.equal(validatePassword('abcdefghij1!'), false);
+  assert.equal(validatePassword('Abcdefghij!'), false);
+  assert.equal(validatePassword('Abcdefghij1'), false);
+  assert.equal(validatePassword('Abcdefghi1 '), false);
+});
+
+test('rejects non-string input', () => {
+  assert.equal(validatePassword(null), false);
+  assert.equal(validatePassword(1234567890), false);
+});
+</file>
+
+<file path="ProveoWeb/backend/test/providerAuthFlow.test.js">
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { once } = require('node:events');
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const originalDatabaseUrl = process.env.DATABASE_URL;
+const originalJwtSecret = process.env.JWT_SECRET;
+process.env.DATABASE_URL ||= 'mysql://root:@127.0.0.1:3306/proveo_test';
+process.env.JWT_SECRET = 'test-provider-auth-flow-secret';
+
+const db = require('../src/db');
+const authRoutes = require('../src/routes/authRoutes');
+
+test('registers a provider with a profile and lets that provider log in', async () => {
+  const originalQuery = db.query;
+  const originalTransaction = db.transaction;
+  let user;
+  let providerProfile;
+
+  db.query = async (sql, params) => {
+    if (sql.includes('email_exists')) {
+      return { rows: [{ email_exists: 0, telefono_exists: 0 }] };
+    }
+    if (sql.includes('FROM usuarios') && params[0] === user.email) {
+      return { rows: [{ ...user, estatus: 'activo' }] };
+    }
+    throw new Error(`Unexpected database query: ${sql}`);
+  };
+
+  db.transaction = async (callback) => callback({
+    query: async (sql, params) => {
+      if (sql.includes('INSERT INTO usuarios')) {
+        user = {
+          id: params[0],
+          nombre: params[1],
+          email: params[2],
+          telefono: params[3],
+          password_hash: params[4],
+          rol: params[5],
+        };
+        return { rows: [] };
+      }
+      if (sql.includes('INSERT INTO perfiles_proveedor')) {
+        providerProfile = {
+          usuario_id: params[0],
+          telefono: params[1],
+          fotos_trabajo: params[2],
+        };
+        return { rows: [] };
+      }
+      throw new Error(`Unexpected transaction query: ${sql}`);
+    },
+  });
+
+  const app = express();
+  app.use(express.json());
+  app.use('/api/v1/auth', authRoutes);
+  const server = app.listen(0, '127.0.0.1');
+
+  try {
+    await once(server, 'listening');
+    const baseUrl = `http://127.0.0.1:${server.address().port}/api/v1/auth`;
+
+    const registrationResponse = await fetch(`${baseUrl}/registro`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: '  Proveedor de Prueba  ',
+        email: ' PROVEEDOR@example.com ',
+        telefono: '55 1234 5678',
+        password: 'Proveedor1!',
+        rol: 'proveedor',
+      }),
+    });
+    const registration = await registrationResponse.json();
+
+    assert.equal(registrationResponse.status, 201);
+    assert.equal(typeof registration.user.id, 'string');
+    assert.deepEqual(registration.user, {
+      id: user.id,
+      nombre: 'Proveedor de Prueba',
+      email: 'proveedor@example.com',
+      rol: 'proveedor',
+    });
+    assert.deepEqual(providerProfile, {
+      usuario_id: user.id,
+      telefono: '+525512345678',
+      fotos_trabajo: '[]',
+    });
+    assert.notEqual(user.password_hash, 'Proveedor1!');
+    assert.equal(await bcrypt.compare('Proveedor1!', user.password_hash), true);
+
+    const loginResponse = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: ' PROVEEDOR@example.com ',
+        password: 'Proveedor1!',
+        rol: 'proveedor',
+      }),
+    });
+    const login = await loginResponse.json();
+
+    assert.equal(loginResponse.status, 200);
+    assert.deepEqual(login.user, registration.user);
+    assert.equal(typeof login.token, 'string');
+    const tokenPayload = jwt.verify(login.token, process.env.JWT_SECRET);
+    assert.equal(tokenPayload.rol, 'proveedor');
+    assert.equal(tokenPayload.sub, user.id);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    });
+    db.query = originalQuery;
+    db.transaction = originalTransaction;
+    if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
+    else process.env.JWT_SECRET = originalJwtSecret;
+    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = originalDatabaseUrl;
+  }
+});
+</file>
+
+<file path="ProveoWeb/backend/Dockerfile">
+
+</file>
+
+<file path="ProveoWeb/backend/index.js">
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Cargar variables de entorno
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const rateLimit = require('express-rate-limit'); // Escudo protector
+
+// Importación de rutas
+const authRoutes = require('./src/routes/authRoutes');
+const proveedorRoutes = require('./src/routes/proveedorRoutes');
+
+if (!process.env.JWT_SECRET) {
+    throw new Error('Configura JWT_SECRET en backend/.env.local o en las variables de entorno.');
+}
+
+const app = express();
+
+// Crear carpeta de subidas si no existe
+const uploadsPath = path.resolve(__dirname, 'uploads');
+fs.mkdirSync(uploadsPath, { recursive: true });
+
+// Middlewares base
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(uploadsPath));
+
+// ==========================================
+// FASE 2: SEGURIDAD (RATE LIMITING)
+// ==========================================
+
+// Escudo 1: Límite General (Anti-Spam de navegación general)
+const limiterGeneral = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 peticiones
+  message: { error: 'Demasiadas peticiones desde esta IP. Por favor, intenta más tarde.' },
+  standardHeaders: true, 
+  legacyHeaders: false,
+});
+
+// Escudo 2: Límite Estricto (Anti-Fuerza Bruta para contraseñas)
+const limiterEstrictoAuth = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora de bloqueo
+  max: 10, // Límite de 10 intentos
+  message: { error: 'Demasiados intentos de acceso. Por seguridad, tu cuenta ha sido bloqueada temporalmente durante 1 hora.' },
+});
+
+// Aplicar Escudo General a TODA la API
+app.use('/api/v1', limiterGeneral);
+
+// Rutas de la aplicación
+app.get('/api/v1/ping', (req, res) => {
+    res.status(200).json({ mensaje: 'Backend de Proveo conectado' });
+});
+
+app.use('/api/v1/auth', limiterEstrictoAuth, authRoutes); // <-- Escudo 2 aplicado aquí
+app.use('/api/v1/proveedores', proveedorRoutes);
+
+// ==========================================
+// FASE 1: RED DE SEGURIDAD (Manejador Global de Errores)
+// ==========================================
+app.use((err, req, res, next) => {
+  console.error('🔥 Error atrapado por el servidor:', err.stack || err.message);
+
+  const statusCode = err.statusCode || 500;
+  const mensajeSeguro = statusCode === 500 
+    ? 'Lo sentimos, ocurrió un problema interno en nuestros servidores. Intenta de nuevo más tarde.' 
+    : err.message;
+
+  res.status(statusCode).json({
+    exito: false,
+    error: mensajeSeguro
+  });
+});
+
+// Levantar el servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor backend corriendo en el puerto ${PORT}`);
+});
+</file>
+
+<file path="ProveoWeb/backend/package.json">
+{
+  "name": "proveo-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.7.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
+    "mysql2": "^3.24.6",
+    "zod": "^4.6.7"
+  }
+}
+</file>
+
+<file path="ProveoWeb/backend/README.md">
+# Backend local
+
+## Configuración
+
+El backend carga `PORT` y `DATABASE_URL` desde el `.env` de la raíz. También requiere `JWT_SECRET`, que se lee primero del entorno y después de `backend/.env.local`. Genera una clave local con:
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+Guarda el resultado como `JWT_SECRET=...` en `backend/.env.local`. Ese archivo está ignorado por Git; no guardes ni publiques secretos en archivos versionados.
+
+La base debe tener las tablas descritas en `migrations/tablas_respaldo` y PostGIS instalado. Para una base existente, ejecuta estas migraciones en orden:
+
+```powershell
+psql $env:DATABASE_URL -f backend/migrations/20261009_perfil_proveedor_sin_titulo.sql
+psql $env:DATABASE_URL -f backend/migrations/20261009_unique_user_contacts.sql
+psql $env:DATABASE_URL -f backend/migrations/20261009_proveedor_profile_details.sql
+```
+
+La segunda migración impide registrar emails duplicados ignorando mayúsculas y teléfonos duplicados en su formato normalizado.
+
+Las imágenes de perfiles y trabajos se guardan localmente en `backend/uploads/` (JPG, PNG o WEBP, máximo 5 MB por archivo); el directorio está excluido de Git. Para producción con varias instancias o almacenamiento efímero, configura almacenamiento de objetos persistente.
+
+El registro todavía no confirma que la persona controle el correo o el teléfono. Para habilitar esa verificación se necesita configurar un proveedor de correo y uno de SMS, junto con sus credenciales y el flujo de confirmación correspondiente.
+
+## Arranque
+
+Desde la raíz del repositorio:
+
+```powershell
+npm --prefix backend start
+npm --prefix frontend run dev
+```
+
+Registro y login están en `/api/v1/auth/registro` y `/api/v1/auth/login`. El perfil del proveedor usa `GET` y `PUT /api/v1/proveedores/perfil` con un token Bearer.
+</file>
+
+<file path="ProveoWeb/frontend/public/img/logo_proveo.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <!-- Círculo de fondo/contenedor con borde sutil -->
+  <circle cx="50" cy="50" r="46" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2" />
+
+  <!-- Letra P (Azul corporativo) -->
+  <!-- Astil vertical y bucle superior -->
+  <path d="M 32,26 V 74 H 42 V 54 H 54 C 63,54 70,48 70,40 C 70,32 63,26 54,26 Z M 42,35 H 53 C 57,35 60,37 60,40 C 60,43 57,45 53,45 H 42 Z" fill="#2563EB" />
+
+  <!-- Letra R (Verde lima brillante) -->
+  <!-- Diagonal / pata trazada desde el centro de la P para entrelazar las formas -->
+  <path d="M 48,48 L 65,74 H 53 L 38,50 Z" fill="#84CC16" />
+</svg>
+</file>
+
+<file path="ProveoWeb/frontend/src/components/.gitkeep">
+
+</file>
+
+<file path="ProveoWeb/frontend/src/components/Navbar.jsx">
+import React, { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, MapPin } from 'lucide-react';
+
+const Navbar = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [servicio, setServicio] = useState(searchParams.get('cat') || '');
+  const [zona, setZona] = useState(searchParams.get('zona') || '');
+
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    localStorage.removeItem('user');
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (servicio.trim()) params.set('cat', servicio.trim());
+    if (zona.trim()) params.set('zona', zona.trim());
+    navigate(`/?${params.toString()}`);
+  };
+
+  return (
+    <header className="bg-white shadow-sm border-b sticky top-0 z-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+        {/* LOGO */}
+        <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-blue-700 shrink-0">
+          <img
+            src="/img/logo_proveo_transparente.png"
+            alt="Proveo Logo"
+            className="h-9 w-auto object-contain"
+          />
+          <span>Proveo</span>
+        </Link>
+
+        {/* BARRA DE BÚSQUEDA */}
+        <form
+          onSubmit={handleSearch}
+          className="hidden md:flex flex-1 max-w-2xl mx-4 items-center bg-gray-50 rounded-full border px-4 py-1.5"
+        >
+          <div className="flex-1 flex items-center border-r px-2">
+            <Search className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+            <input
+              type="text"
+              value={servicio}
+              onChange={(e) => setServicio(e.target.value)}
+              placeholder="¿Qué servicio buscas? (Ej. Plomero)"
+              className="bg-transparent outline-none w-full text-sm text-gray-700"
+            />
+          </div>
+          <div className="flex-1 flex items-center px-4">
+            <MapPin className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+            <input
+              type="text"
+              value={zona}
+              onChange={(e) => setZona(e.target.value)}
+              placeholder="Colonia o Código Postal"
+              className="bg-transparent outline-none w-full text-sm text-gray-700"
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
+          >
+            Buscar
+          </button>
+        </form>
+
+        {/* BOTONES DE SESIÓN Y PERFIL */}
+        <div className="flex items-center gap-4 shrink-0">
+          {!user ? (
+            <>
+              <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-blue-600">
+                ¿Ya tienes cuenta? Iniciar Sesión
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-medium border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50"
+              >
+                Regístrate gratis
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700">Hola, {user.nombre}</span>
+
+              {/* Vista de perfil y opción de eliminar cuenta (Clientes y Proveedores) */}
+              <Link
+                to="/mi-cuenta"
+                className="text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-100 transition"
+              >
+                👤 Mi perfil
+              </Link>
+
+              {/* Formulario de edición (Solo Proveedores) */}
+              {user.rol === 'proveedor' && (
+                <Link
+                  to="/perfil"
+                  className="text-sm font-medium bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-md hover:bg-amber-100 transition"
+                >
+                  🛠️ Editar datos
+                </Link>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="text-sm font-medium text-red-600 hover:text-red-800 ml-1"
+              >
+                Salir
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;
+</file>
+
+<file path="ProveoWeb/frontend/src/pages/.gitkeep">
+
+</file>
+
+<file path="ProveoWeb/frontend/src/pages/Home.jsx">
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { MapPin, Phone, Star, Home as HomeIcon, Wrench, ExternalLink } from 'lucide-react';
+import api from '../services/api';
+
+const categoriasPopulares = [
+  'Todos', 'Plomería', 'Electricidad', 'Carpintería', 'Pintura', 'Albañilería', 'Limpieza', 'Jardinería'
+];
+
+const imageUrl = (path) => {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${new URL(api.defaults.baseURL).origin}${path}`;
+};
+
+const Home = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [proveedores, setProveedores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
+
+  const catActual = searchParams.get('cat') || '';
+  const zonaActual = searchParams.get('zona') || '';
+
+  useEffect(() => {
+    setLoading(true);
+    api.get('/proveedores/buscar', {
+      params: { cat: catActual, zona: zonaActual }
+    })
+      .then(({ data }) => {
+        setProveedores(data.datos || []);
+      })
+      .catch((err) => {
+        console.error('Error al cargar proveedores:', err);
+        setProveedores([]);
+      })
+      .finally(() => setLoading(false));
+  }, [catActual, zonaActual]);
+
+  const filtrarCategoria = (categoria) => {
+    const params = new URLSearchParams(searchParams);
+    if (categoria === 'Todos') {
+      params.delete('cat');
+    } else {
+      params.set('cat', categoria);
+    }
+    setSearchParams(params);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16">
+      {/* BANNER PRINCIPAL */}
+      <section className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-12 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="max-w-2xl">
+            <span className="inline-block bg-blue-600/50 border border-blue-400/30 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+              ✨ Expertos verificados cerca de ti
+            </span>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Encuentra al profesional ideal para tu hogar o negocio
+            </h1>
+            <p className="text-blue-100 text-base">
+              Conecta directamente con plomeros, electricistas, carpinteros y más especialistas en tu código postal sin intermediarios.
+            </p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 text-sm max-w-sm w-full">
+            <h3 className="font-bold text-white text-base mb-1">¿Ofreces algún oficio o servicio?</h3>
+            <p className="text-blue-100 text-xs mb-4">
+              Crea una cuenta como Proveedor, edita tu perfil y aparece en este catálogo gratis.
+            </p>
+            <Link
+              to="/perfil"
+              className="block text-center bg-white text-blue-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-50 transition"
+            >
+              Ir a mi perfil de proveedor
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FILTROS RÁPIDOS DE CATEGORÍA */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {categoriasPopulares.map((cat) => {
+            const activo = (cat === 'Todos' && !catActual) || catActual.toLowerCase() === cat.toLowerCase();
+            return (
+              <button
+                key={cat}
+                onClick={() => filtrarCategoria(cat)}
+                className={`px-4 py-2 rounded-full text-sm font-medium shrink-0 transition ${
+                  activo
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white text-gray-600 border hover:border-blue-400 hover:text-blue-600'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* LISTADO DE PROVEEDORES */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            {catActual || zonaActual
+              ? `Resultados de búsqueda ${catActual ? `para "${catActual}"` : ''} ${zonaActual ? `en "${zonaActual}"` : ''}`
+              : 'Proveedores disponibles'}
+          </h2>
+          {(catActual || zonaActual) && (
+            <button
+              onClick={() => setSearchParams({})}
+              className="text-sm text-blue-600 hover:underline font-medium"
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16 text-gray-500">Cargando especialistas...</div>
+        ) : proveedores.length === 0 ? (
+          <div className="bg-white border rounded-2xl p-12 text-center max-w-xl mx-auto my-8 shadow-sm">
+            <Wrench className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Aún no hay proveedores publicados con estos filtros
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Asegúrate de que el campo <strong>"Tipo de servicio u oficio"</strong> esté guardado en <Link to="/perfil" className="text-blue-600 underline">Mi perfil</Link> para que tu tarjeta aparezca aquí.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {proveedores.map((prov) => (
+              <article
+                key={prov.proveedor_id}
+                className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between"
+              >
+                <div>
+                  {/* Cabecera de la tarjeta */}
+                  <div className="p-6 flex items-start gap-4">
+                    <img
+                      src={imageUrl(prov.foto_perfil_url) || '/img/logo_proveo.png'}
+                      alt={prov.nombre}
+                      className="w-16 h-16 rounded-full object-cover border shrink-0 bg-gray-100"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full mb-1">
+                        {prov.tipo_servicio}
+                      </span>
+                      <h3 className="text-lg font-bold text-gray-900 truncate">
+                        {prov.nombre_negocio || prov.nombre}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate">Por {prov.nombre}</p>
+                    </div>
+                  </div>
+
+                  {/* Descripción y etiquetas */}
+                  <div className="px-6 pb-4 space-y-3">
+                    {prov.descripcion && (
+                      <p className="text-sm text-gray-600 line-clamp-2">{prov.descripcion}</p>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 text-xs text-gray-600 pt-1">
+                      <span className="flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-md">
+                        <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                        {prov.colonia}, CP {prov.codigo_postal}
+                      </span>
+                      {prov.servicio_domicilio && (
+                        <span className="flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-md font-medium">
+                          <HomeIcon className="w-3.5 h-3.5" /> A domicilio
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Mini galería de trabajos */}
+                    {prov.fotos_trabajo?.length > 0 && (
+                      <div className="pt-2">
+                        <p className="text-xs font-medium text-gray-400 mb-1.5">Trabajos realizados:</p>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {prov.fotos_trabajo.slice(0, 4).map((foto, i) => (
+                            <img
+                              key={i}
+                              src={imageUrl(foto)}
+                              alt="Trabajo"
+                              className="h-14 w-full object-cover rounded border"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Pie de tarjeta: Precio y botón de contacto */}
+                <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
+                  <div>
+                    <span className="block text-[11px] text-gray-400 uppercase font-semibold">Precio</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {prov.solo_cotizacion
+                        ? 'Bajo cotización'
+                        : `$${Number(prov.costo_aproximado).toFixed(2)} MXN`}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setProveedorSeleccionado(prov)}
+                    className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Ver datos y contactar
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* VENTANA EMERGENTE (MODAL) DE DETALLE DEL PROVEEDOR */}
+      {proveedorSeleccionado && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-xl">
+            <div className="flex items-start justify-between gap-4 border-b pb-4">
+              <div className="flex items-center gap-4">
+                <img
+                  src={imageUrl(proveedorSeleccionado.foto_perfil_url) || '/img/logo_proveo.png'}
+                  alt={proveedorSeleccionado.nombre}
+                  className="w-20 h-20 rounded-full object-cover border"
+                />
+                <div>
+                  <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
+                    {proveedorSeleccionado.tipo_servicio}
+                  </span>
+                  <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                    {proveedorSeleccionado.nombre_negocio || proveedorSeleccionado.nombre}
+                  </h3>
+                  <p className="text-sm text-gray-500">Especialista: {proveedorSeleccionado.nombre}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setProveedorSeleccionado(null)}
+                className="text-gray-400 hover:text-gray-700 text-xl font-bold px-2"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="py-6 space-y-4 text-sm text-gray-700">
+              {proveedorSeleccionado.formacion && (
+                <div>
+                  <h4 className="font-bold text-gray-900">Formación y experiencia:</h4>
+                  <p>{proveedorSeleccionado.formacion}</p>
+                </div>
+              )}
+              {proveedorSeleccionado.descripcion && (
+                <div>
+                  <h4 className="font-bold text-gray-900">Descripción del servicio:</h4>
+                  <p className="whitespace-pre-line">{proveedorSeleccionado.descripcion}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-4 rounded-xl border">
+                <div>
+                  <span className="text-xs text-gray-400 block">Ubicación</span>
+                  <span className="font-semibold">
+                    Col. {proveedorSeleccionado.colonia}, CP {proveedorSeleccionado.codigo_postal}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 block">Modalidad de precio</span>
+                  <span className="font-semibold">
+                    {proveedorSeleccionado.solo_cotizacion
+                      ? 'Bajo cotización según el trabajo'
+                      : `Costo aprox: $${Number(proveedorSeleccionado.costo_aproximado).toFixed(2)} MXN`}
+                  </span>
+                </div>
+              </div>
+
+              {proveedorSeleccionado.fotos_trabajo?.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-2">Galería de trabajos:</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {proveedorSeleccionado.fotos_trabajo.map((foto, idx) => (
+                      <img
+                        key={idx}
+                        src={imageUrl(foto)}
+                        alt={`Trabajo ${idx + 1}`}
+                        className="h-32 w-full object-cover rounded-lg border"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t pt-4 flex flex-wrap items-center justify-between gap-3">
+              {proveedorSeleccionado.direccion_maps ? (
+                <a
+                  href={proveedorSeleccionado.direccion_maps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:underline"
+                >
+                  <ExternalLink className="w-4 h-4" /> Ver ubicación en Google Maps
+                </a>
+              ) : <span />}
+
+              <div className="flex gap-3">
+                {proveedorSeleccionado.telefono && (
+                  <a
+                    href={`tel:${proveedorSeleccionado.telefono}`}
+                    className="inline-flex items-center gap-2 bg-green-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-green-700 transition"
+                  >
+                    <Phone className="w-4 h-4" /> Llamar al {proveedorSeleccionado.telefono}
+                  </a>
+                )}
+                <button
+                  onClick={() => setProveedorSeleccionado(null)}
+                  className="border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-100"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Home;
+</file>
+
+<file path="ProveoWeb/frontend/src/pages/Login.jsx">
+import React, { useState } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
+import api from '../services/api';
+
+const Login = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(
+    location.state?.rol === 'proveedor' ? 'proveedor' : 'cliente'
+  );
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      const response = await api.post('/auth/login', { ...formData, rol: activeTab });
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      navigate(response.data.user.rol === 'proveedor' ? '/perfil' : '/');
+    } catch (error) {
+      setError(error.response?.data?.error || 'No fue posible iniciar sesión.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border">
+          <div className="text-center mb-6">
+            <h2 className="mt-2 text-2xl font-bold text-gray-900">Iniciar sesión</h2>
+            <p className="text-sm text-gray-500 mt-1">Ingresa a tu cuenta para gestionar tus servicios o solicitudes</p>
+          </div>
+
+          {location.state?.mensaje && <div role="status" className="p-4 mb-4 rounded bg-green-100 text-green-700">{location.state.mensaje}</div>}
+          {error && <div role="alert" className="p-4 mb-4 rounded bg-red-100 text-red-700">{error}</div>}
+
+          <div className="flex border-b mb-6">
+            <button type="button" onClick={() => setActiveTab('cliente')} className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'cliente' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              👤 Soy cliente
+            </button>
+            <button type="button" onClick={() => setActiveTab('proveedor')} className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'proveedor' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              🛠️ Soy proveedor de servicios
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Correo electrónico</label>
+              <input type="email" required autoComplete="email" className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  className="block w-full border border-gray-300 rounded-md p-2.5 pr-12 outline-none focus:border-blue-500"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-blue-600"
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" size={20} /> : <Eye aria-hidden="true" size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" disabled={submitting} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
+              {submitting ? 'Ingresando...' : 'Continuar'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-500">
+            ¿No tienes cuenta? <Link to="/register" className="text-blue-600 font-medium hover:underline">Regístrate gratis aquí</Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+</file>
+
+<file path="ProveoWeb/frontend/src/pages/MiCuenta.jsx">
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  User, Mail, Phone, MapPin, Wrench, ShieldAlert,
+  Trash2, Edit3, CheckCircle2, ExternalLink
+} from 'lucide-react';
+import api from '../services/api';
+
+const imageUrl = (path) => {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${new URL(api.defaults.baseURL).origin}${path}`;
+};
+
+const MiCuenta = () => {
+  const navigate = useNavigate();
+  const [datos, setDatos] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [confirmarBorrado, setConfirmarBorrado] = useState(false);
+  const [borrando, setBorrando] = useState(false);
+
+  useEffect(() => {
+    api.get('/auth/mi-cuenta')
+      .then(({ data }) => setDatos(data))
+      .catch((err) => {
+        setError(err.response?.data?.error || 'No se pudo cargar la información de tu perfil.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleEliminarCuenta = async () => {
+    setBorrando(true);
+    try {
+      await api.delete('/auth/mi-cuenta');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/register');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al intentar eliminar la cuenta.');
+      setBorrando(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="max-w-4xl mx-auto p-8 text-center text-gray-500">Cargando tu perfil...</div>;
+  }
+
+  if (error || !datos?.usuario) {
+    return (
+      <div className="max-w-xl mx-auto mt-12 p-6 bg-red-50 border border-red-200 rounded-2xl text-center">
+        <p className="text-red-700 font-medium mb-4">{error || 'Sesión no disponible'}</p>
+        <Link to="/login" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          Iniciar sesión nuevamente
+        </Link>
+      </div>
+    );
+  }
+
+  const { usuario, perfil_proveedor: p } = datos;
+  const esProveedor = usuario.rol === 'proveedor';
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      {/* Contenedor Maestro con Flexbox vertical para asegurar que nada quede oculto */}
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+
+        {/* TARJETA PRINCIPAL DE IDENTIDAD */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-6">
+            <div className="flex items-center gap-4">
+              {esProveedor && p?.foto_perfil_url ? (
+                <img
+                  src={imageUrl(p.foto_perfil_url)}
+                  alt={usuario.nombre}
+                  className="w-20 h-20 rounded-full object-cover border-2 border-blue-600"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-bold">
+                  {usuario.nombre.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1 rounded-full ${
+                  esProveedor ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                  {esProveedor ? '🛠️ Cuenta de Proveedor' : '👤 Cuenta de Cliente'}
+                </span>
+                <h1 className="text-2xl font-extrabold text-gray-900 mt-1">{usuario.nombre}</h1>
+                <p className="text-sm text-gray-500">{usuario.email}</p>
+              </div>
+            </div>
+
+            {esProveedor && (
+              <Link
+                to="/perfil"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 transition"
+              >
+                <Edit3 className="w-4 h-4" /> Editar formulario de perfil
+              </Link>
+            )}
+          </div>
+
+          {/* DATOS GENERALES DEL USUARIO */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 text-sm">
+            <div className="bg-gray-50 p-4 rounded-xl border">
+              <span className="text-xs text-gray-400 flex items-center gap-1 mb-1">
+                <Mail className="w-3.5 h-3.5" /> Correo electrónico
+              </span>
+              <span className="font-semibold text-gray-800 break-all">{usuario.email}</span>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-xl border">
+              <span className="text-xs text-gray-400 flex items-center gap-1 mb-1">
+                <Phone className="w-3.5 h-3.5" /> Teléfono registrado
+              </span>
+              <span className="font-semibold text-gray-800">{usuario.telefono || 'No especificado'}</span>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-xl border">
+              <span className="text-xs text-gray-400 flex items-center gap-1 mb-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> Estado de cuenta
+              </span>
+              <span className="font-semibold text-green-700 capitalize">{usuario.estatus || 'Activo'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* SECCIÓN EXCLUSIVA SI ES PROVEEDOR: VISTA DE ESCAPARATE */}
+        {esProveedor && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Wrench className="w-5 h-5 text-blue-600" /> Información Pública de Servicios
+                </h2>
+                <p className="text-xs text-gray-500">Así es como los clientes ven tus datos en el catálogo.</p>
+              </div>
+              {!p?.tipo_servicio && (
+                <span className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-semibold">
+                  Perfil incompleto
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div>
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Nombre del negocio</span>
+                <p className="font-semibold text-gray-900 mt-0.5">{p?.nombre_negocio || 'Sin nombre comercial'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Oficio o servicio principal</span>
+                <p className="font-semibold text-blue-700 mt-0.5">{p?.tipo_servicio || 'Aún no especificado'}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Ubicación</span>
+                <p className="font-semibold text-gray-900 mt-0.5">
+                  {p?.colonia ? `Col. ${p.colonia}, CP ${p.codigo_postal || ''}` : 'Sin ubicación registrada'}
+                </p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Tarifa / Modalidad</span>
+                <p className="font-semibold text-gray-900 mt-0.5">
+                  {p?.solo_cotizacion
+                    ? 'Bajo cotización'
+                    : p?.costo_aproximado
+                    ? `$${Number(p.costo_aproximado).toFixed(2)} MXN`
+                    : 'No especificado'}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Estudios o experiencia</span>
+                <p className="text-gray-700 mt-0.5">{p?.formacion || 'Sin información registrada.'}</p>
+              </div>
+              <div className="md:col-span-2">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Descripción de servicios</span>
+                <p className="text-gray-700 mt-0.5 whitespace-pre-line">{p?.descripcion || 'Sin descripción.'}</p>
+              </div>
+            </div>
+
+            {p?.fotos_trabajo?.length > 0 && (
+              <div className="pt-2 border-t">
+                <span className="text-xs text-gray-400 uppercase font-semibold block mb-3">
+                  Galería de trabajos ({p.fotos_trabajo.length})
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {p.fotos_trabajo.map((foto, i) => (
+                    <img
+                      key={i}
+                      src={imageUrl(foto)}
+                      alt={`Trabajo ${i + 1}`}
+                      className="h-24 w-full object-cover rounded-lg border"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ZONA DE PELIGRO: ELIMINAR PERFIL Y USUARIO */}
+        <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-red-700 flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5" /> Eliminar perfil y cuenta
+              </h3>
+              <p className="text-xs text-gray-600 mt-1">
+                Esta acción borrará permanentemente tu usuario ({usuario.rol}) y todos tus datos de la base de datos MySQL.
+              </p>
+            </div>
+
+            {!confirmarBorrado ? (
+              <button
+                onClick={() => setConfirmarBorrado(true)}
+                className="inline-flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-red-100 transition shrink-0"
+              >
+                <Trash2 className="w-4 h-4" /> Eliminar mi perfil
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handleEliminarCuenta}
+                  disabled={borrando}
+                  className="bg-red-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-red-700 transition"
+                >
+                  {borrando ? 'Eliminando...' : 'Sí, borrar definitivamente'}
+                </button>
+                <button
+                  onClick={() => setConfirmarBorrado(false)}
+                  className="border border-gray-300 text-gray-700 text-sm font-medium px-3 py-2.5 rounded-xl hover:bg-gray-100"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default MiCuenta;
+</file>
+
+<file path="ProveoWeb/frontend/src/pages/ProfileEdit.jsx">
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+
+const emptyProfile = {
+  nombre: '',
+  nombre_negocio: '',
+  tipo_servicio: '',
+  formacion: '',
+  servicio_domicilio: null,
+  colonia: '',
+  codigo_postal: '',
+  foto_perfil_url: '',
+  fotos_trabajo: [],
+  solo_cotizacion: null,
+  costo_aproximado: '',
+  direccion_maps: '',
+  descripcion: '',
+  telefono: '',
+};
+
+const imageUrl = (path) => {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${new URL(api.defaults.baseURL).origin}${path}`;
+};
+
+const ProfileEdit = () => {
+  const navigate = useNavigate();
+  const [perfil, setPerfil] = useState(emptyProfile);
+  const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [fotosTrabajoNuevas, setFotosTrabajoNuevas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [mensaje, setMensaje] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      localStorage.removeItem('user');
+    }
+
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    if (user?.rol !== 'proveedor') {
+      navigate('/', { replace: true });
+      return;
+    }
+
+    api.get('/proveedores/perfil', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(({ data }) => setPerfil({ ...emptyProfile, ...data }))
+      .catch((requestError) => {
+        if (requestError.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login', { replace: true });
+          return;
+        }
+        setError(requestError.response?.data?.error || 'No fue posible cargar tu perfil.');
+      })
+      .finally(() => setLoading(false));
+  }, [navigate]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setPerfil((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleGalleryChange = (event) => {
+    const selected = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (perfil.fotos_trabajo.length + fotosTrabajoNuevas.length + selected.length > 5) {
+      setError('Puedes tener hasta cinco fotos de tus trabajos.');
+      return;
+    }
+    setError('');
+    setFotosTrabajoNuevas((current) => [
+      ...current,
+      ...selected.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+    ]);
+  };
+
+  const removeExistingGalleryImage = (image) => {
+    setPerfil((current) => ({
+      ...current,
+      fotos_trabajo: current.fotos_trabajo.filter((url) => url !== image),
+    }));
+  };
+
+  const removeNewGalleryImage = (preview) => {
+    setFotosTrabajoNuevas((current) => {
+      const removed = current.find((item) => item.preview === preview);
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return current.filter((item) => item.preview !== preview);
+    });
+  };
+
+  const uploadImages = async (token) => {
+    if (!fotoPerfil && fotosTrabajoNuevas.length === 0) return {};
+
+    const body = new FormData();
+    if (fotoPerfil) body.append('foto_perfil', fotoPerfil);
+    fotosTrabajoNuevas.forEach(({ file }) => body.append('fotos_trabajo', file));
+
+    const { data } = await api.post('/proveedores/perfil/imagenes', body, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    setMensaje('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const uploaded = await uploadImages(token);
+      if (uploaded.foto_perfil_url || uploaded.fotos_trabajo?.length) {
+        setPerfil((current) => ({
+          ...current,
+          foto_perfil_url: uploaded.foto_perfil_url || current.foto_perfil_url,
+          fotos_trabajo: [...current.fotos_trabajo, ...(uploaded.fotos_trabajo || [])],
+        }));
+        setFotoPerfil(null);
+        fotosTrabajoNuevas.forEach(({ preview }) => URL.revokeObjectURL(preview));
+        setFotosTrabajoNuevas([]);
+      }
+      const payload = {
+        ...perfil,
+        foto_perfil_url: uploaded.foto_perfil_url || perfil.foto_perfil_url,
+        fotos_trabajo: [...perfil.fotos_trabajo, ...(uploaded.fotos_trabajo || [])],
+        costo_aproximado: perfil.solo_cotizacion ? null : perfil.costo_aproximado,
+      };
+      const { data } = await api.put('/proveedores/perfil', payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPerfil({ ...emptyProfile, ...data });
+      setFotoPerfil(null);
+      fotosTrabajoNuevas.forEach(({ preview }) => URL.revokeObjectURL(preview));
+      setFotosTrabajoNuevas([]);
+      setMensaje('Perfil actualizado correctamente.');
+    } catch (requestError) {
+      if (requestError.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login', { replace: true });
+        return;
+      }
+      setError(requestError.response?.data?.error || 'No fue posible guardar tu perfil.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="text-center p-12">Cargando perfil...</div>;
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm border">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Mi perfil de proveedor</h2>
+        <p className="text-sm text-gray-500 mb-6">Cuéntales a tus clientes quién eres y qué oficios o servicios ofreces.</p>
+
+        {error && <div role="alert" className="p-4 mb-4 rounded bg-red-100 text-red-700">{error}</div>}
+        {mensaje && <div role="status" className="p-4 mb-4 rounded bg-green-100 text-green-700">{mensaje}</div>}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre de la persona *</label>
+            <input id="nombre" name="nombre" required maxLength="100" value={perfil.nombre} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label htmlFor="nombre_negocio" className="block text-sm font-medium text-gray-700">Nombre del negocio (opcional)</label>
+            <input id="nombre_negocio" name="nombre_negocio" maxLength="150" value={perfil.nombre_negocio || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label htmlFor="tipo_servicio" className="block text-sm font-medium text-gray-700">Tipo de servicio u oficio *</label>
+            <input id="tipo_servicio" name="tipo_servicio" required maxLength="150" value={perfil.tipo_servicio || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label htmlFor="formacion" className="block text-sm font-medium text-gray-700">Título, estudios o experiencia relacionada (opcional)</label>
+            <textarea id="formacion" name="formacion" maxLength="500" rows="2" value={perfil.formacion || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+          </div>
+
+          <fieldset>
+            <legend className="block text-sm font-medium text-gray-700">¿Ofreces servicio a domicilio? *</legend>
+            <div className="mt-2 flex gap-6">
+              {[['true', 'Sí'], ['false', 'No']].map(([value, label]) => (
+                <label key={value} className="flex items-center gap-2">
+                  <input type="radio" name="servicio_domicilio" required checked={perfil.servicio_domicilio === (value === 'true')} onChange={() => setPerfil((current) => ({ ...current, servicio_domicilio: value === 'true' }))} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="colonia" className="block text-sm font-medium text-gray-700">Colonia *</label>
+              <input id="colonia" name="colonia" required maxLength="150" value={perfil.colonia || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label htmlFor="codigo_postal" className="block text-sm font-medium text-gray-700">Código postal *</label>
+              <input id="codigo_postal" name="codigo_postal" required inputMode="numeric" pattern="[0-9]{5}" maxLength="5" value={perfil.codigo_postal || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700">Teléfono de contacto</label>
+            <input id="telefono" type="tel" name="telefono" maxLength="20" pattern="(?:\+?52[\s().-]*)?(?:[0-9][\s().-]*){10}" title="Ingresa 10 dígitos mexicanos, con o sin el prefijo +52." value={perfil.telefono || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label htmlFor="foto_perfil" className="block text-sm font-medium text-gray-700">Foto de perfil *</label>
+            <input id="foto_perfil" type="file" accept="image/jpeg,image/png,image/webp" required={!perfil.foto_perfil_url && !fotoPerfil} onChange={(event) => setFotoPerfil(event.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-700" />
+            <p className="mt-1 text-xs text-gray-500">JPG, PNG o WEBP; máximo 5 MB.</p>
+            {fotoPerfil && <p className="mt-2 text-sm text-gray-600">{fotoPerfil.name}</p>}
+            {!fotoPerfil && perfil.foto_perfil_url && <img src={imageUrl(perfil.foto_perfil_url)} alt="Foto de perfil" className="mt-3 h-28 w-28 rounded-full object-cover" />}
+          </div>
+
+          <div>
+            <label htmlFor="fotos_trabajo" className="block text-sm font-medium text-gray-700">Fotos de tus trabajos o servicios (hasta 5)</label>
+            <input id="fotos_trabajo" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleGalleryChange} className="mt-1 block w-full text-sm text-gray-700" />
+            <p className="mt-1 text-xs text-gray-500">JPG, PNG o WEBP; máximo 5 MB por imagen.</p>
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {perfil.fotos_trabajo.map((image) => (
+                <div key={image}>
+                  <img src={imageUrl(image)} alt="Trabajo realizado" className="h-24 w-full rounded object-cover" />
+                  <button type="button" onClick={() => removeExistingGalleryImage(image)} className="mt-1 text-xs text-red-600 hover:underline">Quitar foto</button>
+                </div>
+              ))}
+              {fotosTrabajoNuevas.map(({ preview }, index) => (
+                <div key={preview}>
+                  <img src={preview} alt={`Nueva foto de trabajo ${index + 1}`} className="h-24 w-full rounded object-cover" />
+                  <button type="button" onClick={() => removeNewGalleryImage(preview)} className="mt-1 text-xs text-red-600 hover:underline">Quitar foto</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <fieldset>
+            <legend className="block text-sm font-medium text-gray-700">Precio del servicio *</legend>
+            <div className="mt-2 space-y-2">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="solo_cotizacion" required checked={perfil.solo_cotizacion === true} onChange={() => setPerfil((current) => ({ ...current, solo_cotizacion: true, costo_aproximado: '' }))} />
+                El precio depende del trabajo (bajo cotización)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="solo_cotizacion" required checked={perfil.solo_cotizacion === false} onChange={() => setPerfil((current) => ({ ...current, solo_cotizacion: false }))} />
+                Mostrar un costo aproximado
+              </label>
+            </div>
+            {perfil.solo_cotizacion === false && (
+              <div className="mt-3">
+                <label htmlFor="costo_aproximado" className="block text-sm font-medium text-gray-700">Costo aproximado en MXN *</label>
+                <input id="costo_aproximado" type="number" name="costo_aproximado" required min="0.01" step="0.01" value={perfil.costo_aproximado || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" />
+              </div>
+            )}
+          </fieldset>
+
+          <div>
+            <label htmlFor="direccion_maps" className="block text-sm font-medium text-gray-700">Dirección o enlace de Google Maps (opcional)</label>
+            <input id="direccion_maps" type="url" name="direccion_maps" value={perfil.direccion_maps || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" placeholder="Pega el enlace para compartir de Google Maps" />
+          </div>
+
+          <div>
+            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700">Descripción de tus servicios (opcional)</label>
+            <textarea id="descripcion" name="descripcion" value={perfil.descripcion || ''} onChange={handleChange} maxLength="5000" rows="4" className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" placeholder="Describe los oficios y trabajos que realizas, tu experiencia y la zona donde trabajas." />
+          </div>
+
+          <div className="flex justify-end pt-4 border-t">
+            <button type="submit" disabled={saving} className="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 disabled:opacity-60">
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ProfileEdit;
+</file>
+
+<file path="ProveoWeb/frontend/src/pages/Register.jsx">
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Wrench, Briefcase, Eye, EyeOff } from 'lucide-react';
+import api from '../services/api';
+
+const Register = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    nombre: '', email: '', telefono: '', password: '', rol: 'cliente'
+  });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await api.post('/auth/registro', formData);
+      navigate('/login', {
+        state: {
+          mensaje: 'Registro exitoso. Inicia sesión para continuar.',
+          rol: formData.rol,
+        },
+      });
+    } catch (error) {
+      setError(error.response?.data?.error || 'No fue posible completar el registro.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleChange = (event) => {
+    setFormData((current) => ({ ...current, [event.target.name]: event.target.value }));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
+      <div className="max-w-2xl w-full bg-white p-8 rounded-xl shadow-sm border">
+        <div className="text-center mb-8">
+          <h2 className="mt-4 text-3xl font-bold text-gray-900">Formulario de registro de usuario</h2>
+          <p className="mt-2 text-sm text-gray-500">Únete a la red de expertos en Proveo para conectar con clientes o encontrar soluciones para tu hogar.</p>
+        </div>
+
+        {error && <div role="alert" className="p-4 mb-4 rounded bg-red-100 text-red-700">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Selecciona tu tipo de cuenta *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                onClick={() => setFormData({...formData, rol: 'cliente'})}
+                className={`cursor-pointer border-2 rounded-lg p-4 flex gap-3 ${formData.rol === 'cliente' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
+              >
+                <div className={`p-2 rounded-full ${formData.rol === 'cliente' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}><Wrench className="w-5 h-5"/></div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 text-sm">Busco proveedores y servicios</h4>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setFormData({...formData, rol: 'proveedor'})}
+                className={`cursor-pointer border-2 rounded-lg p-4 flex gap-3 ${formData.rol === 'proveedor' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
+              >
+                <div className={`p-2 rounded-full ${formData.rol === 'proveedor' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}><Briefcase className="w-5 h-5"/></div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 text-sm">Ofrezco mis servicios</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Nombre y apellidos *</label>
+              <input type="text" name="nombre" required maxLength="100" className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" value={formData.nombre} onChange={handleChange} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Correo electrónico *</label>
+              <input type="email" name="email" required maxLength="150" className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" value={formData.email} onChange={handleChange} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Número de teléfono *</label>
+              <input type="tel" name="telefono" required maxLength="20" pattern="(?:\+?52[\s().-]*)?(?:[0-9][\s().-]*){10}" title="Ingresa 10 dígitos mexicanos, con o sin el prefijo +52." className="mt-1 block w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-500" placeholder="+52 000 000 0000" value={formData.telefono} onChange={handleChange} />
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Contraseña *</label>
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  minLength="10"
+                  maxLength="18"
+                  pattern="(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s]).{10,18}"
+                  title="Usa entre 10 y 18 caracteres, con al menos una mayúscula, un número y un símbolo."
+                  className="block w-full border border-gray-300 rounded-md p-2.5 pr-12 outline-none focus:border-blue-500"
+                  placeholder="10–18 caracteres, una mayúscula, un número y un símbolo"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-blue-600"
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" size={20} /> : <Eye aria-hidden="true" size={20} />}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Debe tener entre 10 y 18 caracteres, incluyendo una mayúscula, un número y un símbolo.</p>
+            </div>
+          </div>
+
+          <button type="submit" disabled={submitting} className="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-60 transition-colors">
+            {submitting ? 'Registrando...' : 'Completar Registro'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Register;
+</file>
+
+<file path="ProveoWeb/frontend/src/services/api.js">
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:3000/api/v1',
+});
+
+// Interceptor para inyectar el token automáticamente en cada petición
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default api;
+</file>
+
+<file path="ProveoWeb/frontend/src/services/authService.js">
+
+</file>
+
+<file path="ProveoWeb/frontend/src/services/proveedorService.js">
+
+</file>
+
+<file path="ProveoWeb/frontend/src/App.jsx">
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import ProfileEdit from './pages/ProfileEdit';
+import MiCuenta from './pages/MiCuenta';
+
+function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/mi-cuenta" element={<MiCuenta />} />
+          <Route path="/perfil" element={<ProfileEdit />} />
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+</file>
+
+<file path="ProveoWeb/frontend/src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+</file>
+
+<file path="ProveoWeb/frontend/src/main.jsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+</file>
+
+<file path="ProveoWeb/frontend/Dockerfile">
+
+</file>
+
+<file path="ProveoWeb/frontend/index.html">
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Proveo</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="ProveoWeb/frontend/package.json">
+{
+  "name": "proveo-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "lucide-react": "^0.378.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.23.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.0"
+  }
+}
+</file>
+
+<file path="ProveoWeb/frontend/postcss.config.js">
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="ProveoWeb/frontend/tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="ProveoWeb/frontend/vite.config.js">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})
+</file>
+
+<file path="ProveoWeb/.gitignore">
+node_modules/
+.env
+backend/.env.local
+backend/uploads/
+/frontend/dist/
+</file>
+
+<file path="ProveoWeb/docker-compose.yml">
+services:
+  db:
+    image: mysql:8.0
+    container_name: proveo_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/000_init.sql
+      - ./backend/db/migrations/001_esquema.sql:/docker-entrypoint-initdb.d/001_esquema.sql
+      - ./backend/db/migrations/001_zonas_servicios.sql:/docker-entrypoint-initdb.d/001_zonas_servicios.sql
+      - ./backend/db/migrations/002_datos.sql:/docker-entrypoint-initdb.d/002_datos.sql
+      - ./backend/db/migrations/003_procedimiento.sql:/docker-entrypoint-initdb.d/003_procedimiento.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    container_name: proveo_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    container_name: proveo_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_TARGET: http://backend:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  db_data:volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/migrations/001_esquema_mysql.sql:/docker-entrypoint-initdb.d/001_esquema_mysql.sql
+</file>
+
+<file path="ProveoWeb/index.htm">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explorador Mágico de Carpetas - ProveoWeb 🏰</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-purple-500 selection:text-white pb-20">
+
+  <!-- CABECERA -->
+  <header class="max-w-7xl mx-auto px-6 pt-10 pb-6 text-center">
+    <span class="inline-block bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-3">
+      🗂️ Mapa Completo de Carpetas y Archivos (Explicado para Niños)
+    </span>
+    <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
+      La Ciudad Por Dentro: <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400">ProveoWeb</span>
+    </h1>
+    <p class="text-slate-400 text-base md:text-lg max-w-3xl mx-auto">
+      Haz clic en cualquier carpeta o archivo del explorador para descubrir qué pieza del rompecabezas es, qué trabajo hace y con quién platica.
+    </p>
+  </header>
+
+  <!-- RESUMEN DE LAS 3 TORRES -->
+  <section class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
+    <div class="animate-float bg-gradient-to-b from-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-3xl p-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-2xl">🏰</div>
+        <div>
+          <span class="text-indigo-400 text-[11px] font-bold uppercase tracking-wider">Carpeta /frontend</span>
+          <h2 class="text-xl font-bold text-white">La Fachada (Salón)</h2>
+        </div>
+      </div>
+      <p class="text-slate-300 text-xs leading-relaxed">
+        Es la tienda de enfrente con vitrinas y botones de colores. Aquí entran los clientes y proveedores desde su navegador.
+      </p>
+    </div>
+
+    <div class="animate-float [animation-delay:1.2s] bg-gradient-to-b from-purple-950/60 to-slate-900 border border-purple-500/30 rounded-3xl p-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-2xl">🤖</div>
+        <div>
+          <span class="text-purple-400 text-[11px] font-bold uppercase tracking-wider">Carpeta /backend</span>
+          <h2 class="text-xl font-bold text-white">El Cuarto de Control</h2>
+        </div>
+      </div>
+      <p class="text-slate-300 text-xs leading-relaxed">
+        La oficina secreta donde trabajan los guardias, inspectores de fotos y gerentes que revisan que nadie haga trampa.
+      </p>
+    </div>
+
+    <div class="animate-float [animation-delay:2.4s] bg-gradient-to-b from-amber-950/60 to-slate-900 border border-amber-500/30 rounded-3xl p-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-2xl">📦</div>
+        <div>
+          <span class="text-amber-400 text-[11px] font-bold uppercase tracking-wider">MySQL + /migrations</span>
+          <h2 class="text-xl font-bold text-white">La Caja Fuerte</h2>
+        </div>
+      </div>
+      <p class="text-slate-300 text-xs leading-relaxed">
+        La bóveda subterránea en XAMPP donde se guardan bajo llave todos los usuarios, contraseñas y perfiles.
+      </p>
+    </div>
+  </section>
+
+  <!-- EXPLORADOR INTERACTIVO ESTILO VS CODE -->
+  <main class="max-w-7xl mx-auto px-6 mt-8">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+      
+      <!-- Barra Superior de Ventana -->
+      <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-full bg-rose-500"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-amber-500"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
+          <span class="ml-3 text-sm font-bold text-slate-200">🔍 Rayos X del Proyecto: Haz clic en cualquier archivo de la izquierda</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="filterZone('all')" id="btn-all" class="px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white transition">Todos</button>
+          <button onclick="filterZone('root')" id="btn-root" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🏠 Raíz</button>
+          <button onclick="filterZone('backend')" id="btn-backend" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🤖 Backend</button>
+          <button onclick="filterZone('frontend')" id="btn-frontend" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🏰 Frontend</button>
+        </div>
+      </div>
+
+      <!-- Cuerpo del Explorador: Árbol Izquierdo + Explicación Derecha -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
+        
+        <!-- COLUMNA IZQUIERDA: ÁRBOL DE CARPETAS Y ARCHIVOS -->
+        <aside class="lg:col-span-5 bg-slate-950/70 border-r border-slate-800 p-4 overflow-y-auto max-h-[600px] custom-scroll" id="file-tree">
+          <!-- Se llena dinámicamente con JS -->
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISOR DE EXPLICACIÓN PARA NIÑOS -->
+        <section class="lg:col-span-7 p-8 flex flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30" id="file-detail">
+          <!-- Se llena dinámicamente al hacer clic -->
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- MAPA DE CONEXIONES: ¿CÓMO VIAJA LA INFORMACIÓN ENTRE ARCHIVOS? -->
+  <section class="max-w-7xl mx-auto px-6 mt-12">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl">
+      <div class="text-center mb-8">
+        <span class="text-emerald-400 text-xs font-bold uppercase tracking-widest">El Trabajo en Equipo</span>
+        <h3 class="text-2xl font-bold text-white mt-1">¿Cómo se pasan la pelota los archivos cuando haces algo?</h3>
+        <p class="text-slate-400 text-sm mt-1">Elige una misión para iluminar qué archivos trabajan juntos paso a paso:</p>
+      </div>
+
+      <!-- Botones de Misión -->
+      <div class="flex flex-wrap justify-center gap-3 mb-8">
+        <button onclick="showFlow('registro')" id="flow-btn-registro" class="px-5 py-2.5 rounded-2xl text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition">
+          🎟️ Misión 1: Registrarse e Iniciar Sesión
+        </button>
+        <button onclick="showFlow('perfil')" id="flow-btn-perfil" class="px-5 py-2.5 rounded-2xl text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+          🛠️ Misión 2: Guardar Perfil y Subir Fotos
+        </button>
+      </div>
+
+      <!-- Contenedor de Pasos del Flujo -->
+      <div id="flow-steps" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- Se llena dinámicamente con JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- DATOS Y LÓGICA INTERACTIVA -->
+  <script>
+    const projectFiles = [
+      // ================= RAÍZ =================
+      {
+        id: "root-folder",
+        zone: "root",
+        isFolder: true,
+        level: 0,
+        icon: "🏠",
+        name: "ProveoWeb/ (Carpeta Principal)",
+        badge: "Terreno Principal",
+        analogy: "Es el terreno gigante donde está construido todo el parque de diversiones.",
+        whatItDoes: "Guarda adentro las dos torres grandes (backend y frontend) y los manuales e interruptores principales.",
+        talksTo: "Contiene a todas las demás carpetas del proyecto.",
+        status: "✅ Activo"
+      },
+      {
+        id: "env",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🔑",
+        name: ".env",
+        badge: "Llaves Secretas",
+        analogy: "Es una hojita secreta guardada en el bolsillo del director con la combinación de la caja fuerte.",
+        whatItDoes: "Le dice al Backend en qué puerta está MySQL (puerto 3307), cómo se llama la base de datos (proveo_db) y cuál es el usuario (root).",
+        talksTo: "Lo lee backend/index.js y backend/src/db.js al encender el servidor.",
+        status: "✅ Activo"
+      },
+      {
+        id: "gitignore",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🛑",
+        name: ".gitignore",
+        badge: "Guardia de Secretos",
+        analogy: "Es una lista de cosas prohibidas que NO se deben subir a internet por seguridad.",
+        whatItDoes: "Evita que tus contraseñas (.env), las fotos privadas de usuarios (uploads/) y las carpetas pesadas (node_modules/) se suban a GitHub.",
+        talksTo: "Vigila a Git cuando guardas cambios del proyecto.",
+        status: "✅ Activo"
+      },
+      {
+        id: "docker-compose",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🐳",
+        name: "docker-compose.yml",
+        badge: "Robot Constructor",
+        analogy: "Es una caja mágica de Lego que arma las 3 torres (Base de datos, Backend y Frontend) sola con presionar un botón.",
+        whatItDoes: "Configura contenedores automáticos para MySQL, el servidor Node y la página React sin instalarlos a mano.",
+        talksTo: "Conecta los contenedores de db, backend y frontend.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-index-htm",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🗺️",
+        name: "index.htm",
+        badge: "Mapa Visual",
+        analogy: "¡Es este mismo cartel interactivo que estás mirando ahora mismo!",
+        whatItDoes: "Te muestra de forma colorida y sencilla cómo funciona cada rincón de ProveoWeb.",
+        talksTo: "Lo abres directamente en tu navegador web.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-index-js",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🔘",
+        name: "index.js (Raíz)",
+        badge: "Botón de Arranque",
+        analogy: "Es un control remoto con un solo botón que enciende el motor del Backend desde la entrada.",
+        whatItDoes: "Llama directamente al archivo backend/index.js para encender el servidor.",
+        talksTo: "Despierta a backend/index.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-package",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "📋",
+        name: "package.json y package-lock.json",
+        badge: "Lista de Herramientas",
+        analogy: "Es el inventario de cajas de herramientas que se compraron para construir el edificio.",
+        whatItDoes: "Anota qué programas necesita Node.js y qué comandos rápidos existen (como start y dev).",
+        talksTo: "Trabaja junto con npm cuando instalas paquetes.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-readme",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "📘",
+        name: "README.md y repomix-output.xml",
+        badge: "Manual y Radiografía",
+        analogy: "El README es el instructivo del juguete y el archivo XML es una foto de rayos X de todo el código junto.",
+        whatItDoes: "Explican las historias de usuario (registro, perfil, barra de navegación) y empaquetan el proyecto para analizarlo.",
+        talksTo: "Sirven de guía para los programadores.",
+        status: "✅ Activo"
+      },
+
+      // ================= BACKEND =================
+      {
+        id: "backend-folder",
+        zone: "backend",
+        isFolder: true,
+        level: 1,
+        icon: "🤖",
+        name: "backend/ (El Cuarto de Control)",
+        badge: "Torre del Servidor",
+        analogy: "Es el edificio de oficinas privadas donde trabajan los guardias, inspectores y bibliotecarios.",
+        whatItDoes: "Recibe las peticiones del Frontend, verifica que todo sea seguro y guarda los datos en MySQL.",
+        talksTo: "Escucha a frontend/ y guarda en la base de datos MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-migrations",
+        zone: "backend",
+        isFolder: true,
+        level: 2,
+        icon: "📐",
+        name: "backend/migrations/",
+        badge: "Planos de la Bóveda",
+        analogy: "Es el tubo donde los arquitectos guardan los planos para construir los cajones de la caja fuerte.",
+        whatItDoes: "Guarda los archivos SQL que crean las tablas de la base de datos.",
+        talksTo: "Se importa dentro de phpMyAdmin / MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "sql-mysql",
+        zone: "backend",
+        isFolder: false,
+        level: 3,
+        icon: "🗄️",
+        name: "001_esquema_mysql.sql",
+        badge: "Plano Maestro MySQL",
+        analogy: "Es el instructivo exacto que usaste en phpMyAdmin para fabricar los archiveros de la base de datos.",
+        whatItDoes: "Crea las 7 tablas en MySQL: usuarios, perfiles_proveedor, categorias, proveedor_categorias, servicios, solicitudes, mensajes_chat y resenas.",
+        talksTo: "Construye las tablas que luego usan authController.js y proveedorRepository.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-src",
+        zone: "backend",
+        isFolder: true,
+        level: 2,
+        icon: "🧠",
+        name: "backend/src/",
+        badge: "El Cerebro del Servidor",
+        analogy: "Es el piso principal de oficinas dentro del Cuarto de Control, dividido por departamentos.",
+        whatItDoes: "Organiza a los gerentes (controllers), guardias (middlewares), bibliotecarios (repositories) y pasillos (routes).",
+        talksTo: "Conecta a backend/index.js con todas las tareas del sistema.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-controllers",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "👔",
+        name: "src/controllers/ (Los Gerentes)",
+        badge: "Toma de Decisiones",
+        analogy: "Son los gerentes sentados en su escritorio que revisan cada solicitud hoja por hoja antes de sellarla de aprobado.",
+        whatItDoes: "Contiene a authController.js y proveedorController.js.",
+        talksTo: "Recibe órdenes de routes/ y manda a guardar a repositories/ o db.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "auth-controller",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🎟️",
+        name: "authController.js",
+        badge: "Gerente de Cuentas",
+        analogy: "Es el encargado del club que inscribe a los socios nuevos y les da su pulsera mágica (Token) cuando entran.",
+        whatItDoes: "Revisa que el correo y teléfono no estén repetidos, convierte la contraseña en código secreto (hash con bcrypt) y crea la sesión de 7 días.",
+        talksTo: "Usa mexicanPhone.js, passwordPolicy.js y guarda en la tabla usuarios de MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "proveedor-controller",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🛠️",
+        name: "proveedorController.js",
+        badge: "Gerente de Proveedores",
+        analogy: "Es el supervisor que revisa que el currículum del carpintero o plomero tenga código postal válido, enlace real de Google Maps y fotos permitidas.",
+        whatItDoes: "Valida todos los datos del perfil del proveedor, procesa la subida de imágenes y coordina la búsqueda de proveedores.",
+        talksTo: "Platica con proveedorRepository.js y mexicanPhone.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-middlewares",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "🛡️",
+        name: "src/middlewares/ (Los Guardias)",
+        badge: "Filtros de Seguridad",
+        analogy: "Son los guardias de seguridad parados en los pasillos que piden tu gafete y revisan tus mochilas antes de dejarte pasar.",
+        whatItDoes: "Protegen las rutas privadas del servidor.",
+        talksTo: "Trabajan entre routes/ y controllers/.",
+        status: "✅ Activo"
+      },
+      {
+        id: "mw-auth",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🪪",
+        name: "auth.js",
+        badge: "Inspector de Gafetes",
+        analogy: "Es el guardia con lector láser que revisa que tu pulsera digital (Token JWT) sea auténtica y no haya vencido.",
+        whatItDoes: "Lee el encabezado Authorization Bearer y descubre quién eres (tu ID y tu rol).",
+        talksTo: "Protege las rutas de proveedorRoutes.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "mw-roles",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🚧",
+        name: "roles.js",
+        badge: "Guardia de Áreas VIP",
+        analogy: "Revisa el color de tu casco: si dice 'cliente', no te deja entrar al taller exclusivo de 'proveedor'.",
+        whatItDoes: "Bloquea con error 403 a cualquier usuario que intente entrar a una función que no corresponde a su rol.",
+        talksTo: "Trabaja después de auth.js en proveedorRoutes.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "mw-upload",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "📸",
+        name: "profileImageUpload.js",
+        badge: "Inspector de Fotos",
+        analogy: "Es un guardia con rayos X que revisa que las fotos que subes sean imágenes reales (JPG, PNG, WEBP) y no pesen más de 5 megas.",
+        whatItDoes: "Recibe 1 foto de perfil y hasta 5 fotos de trabajo, les pone un nombre único al azar y las guarda en la carpeta backend/uploads/.",
+        talksTo: "Le entrega las direcciones de las fotos listas a proveedorController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-repos",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "📚",
+        name: "src/repositories/ (Bibliotecario)",
+        badge: "Acceso a Caja Fuerte",
+        analogy: "Es el único empleado con llaves para entrar a la bóveda de MySQL a buscar o guardar carpetas.",
+        whatItDoes: "Aísla las consultas SQL de los perfiles de proveedor.",
+        talksTo: "Conecta a proveedorController.js con db.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "proveedor-repo",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🗂️",
+        name: "proveedorRepository.js",
+        badge: "Archivista de Perfiles",
+        analogy: "Sabe exactamente en qué cajón de MySQL está el perfil de cada proveedor para leerlo o actualizarlo.",
+        whatItDoes: "Ejecuta los SELECT, INSERT y UPDATE en las tablas usuarios y perfiles_proveedor usando transacciones seguras.",
+        talksTo: "Usa db.js para hablar con MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-routes",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "🪧",
+        name: "src/routes/ (Los Letreros)",
+        badge: "Mapa de Puertas",
+        analogy: "Son los letreros en los pasillos que dicen: 'Para registrarse vaya a la ventanilla 1, para editar perfil vaya a la ventanilla 2'.",
+        whatItDoes: "Conecta las direcciones web (URLs) con los guardias y gerentes correspondientes.",
+        talksTo: "Se conectan en backend/index.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "routes-files",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🛣️",
+        name: "authRoutes.js y proveedorRoutes.js",
+        badge: "Pasillos de la API",
+        analogy: "Son las dos avenidas principales dentro del Cuarto de Control.",
+        whatItDoes: "authRoutes abre /registro y /login; proveedorRoutes abre /buscar, /perfil y /perfil/imagenes.",
+        talksTo: "Dirigen las visitas hacia authController.js y proveedorController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-utils",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "📏",
+        name: "src/utils/ (Reglas de Bolsillo)",
+        badge: "Validadores Rápidos",
+        analogy: "Son dos reglas de medir que usan los gerentes para comprobar teléfonos y contraseñas.",
+        whatItDoes: "Contiene mexicanPhone.js (limpia teléfonos a 10 dígitos con +52) y passwordPolicy.js (exige 10-18 caracteres, mayúscula, número y símbolo).",
+        talksTo: "Ayudan a authController.js y proveedorController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-future",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "🏗️",
+        name: "src/services/ y src/sockets/",
+        badge: "Cuartos para el Futuro",
+        analogy: "Son habitaciones nuevas que ya tienen piso y techo, pero están esperando que lleguen los muebles.",
+        whatItDoes: "Contienen solicitud_service.js, resena_service.js y chat.js (actualmente vacíos, listos para la siguiente etapa del proyecto).",
+        talksTo: "Próximamente conectarán las tablas solicitudes, resenas y mensajes_chat.",
+        status: "🚧 En construcción"
+      },
+      {
+        id: "backend-db",
+        zone: "backend",
+        isFolder: false,
+        level: 3,
+        icon: "🔌",
+        name: "src/db.js",
+        badge: "Cable a MySQL",
+        analogy: "Es el teléfono rojo directo entre el Cuarto de Control y la Caja Fuerte de XAMPP.",
+        whatItDoes: "Crea el grupo de conexiones (pool) con mysql2 y maneja las transacciones (para que si algo falla a la mitad, no se guarden datos incompletos).",
+        talksTo: "Conecta a authController.js y proveedorRepository.js con MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-index",
+        zone: "backend",
+        isFolder: false,
+        level: 2,
+        icon: "🚀",
+        name: "backend/index.js",
+        badge: "Motor Principal Backend",
+        analogy: "Es el interruptor maestro que prende las luces del Cuarto de Control en el puerto 3000.",
+        whatItDoes: "Lee los archivos .env, crea la carpeta uploads/, activa los permisos CORS y conecta las rutas /api/v1/auth y /api/v1/proveedores.",
+        talksTo: "Es el corazón que une todo el backend.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-tests",
+        zone: "backend",
+        isFolder: true,
+        level: 2,
+        icon: "🧪",
+        name: "backend/test/ (Robots Inspector)",
+        badge: "Control de Calidad",
+        analogy: "Son 3 robots científicos que hacen pruebas de laboratorio para asegurarse de que nada esté roto.",
+        whatItDoes: "Contiene mexicanPhone.test.js, passwordPolicy.test.js y providerAuthFlow.test.js (los que corriste con npm test y dieron 8 palomitas verdes).",
+        talksTo: "Prueban a utils/ y a authRoutes.js.",
+        status: "✅ Activo"
+      },
+
+      // ================= FRONTEND =================
+      {
+        id: "frontend-folder",
+        zone: "frontend",
+        isFolder: true,
+        level: 1,
+        icon: "🏰",
+        name: "frontend/ (El Salón de Juegos)",
+        badge: "Torre Visual",
+        analogy: "Es la tienda bonita con escaparates luminosos a donde entran las personas desde su navegador en el puerto 5173.",
+        whatItDoes: "Dibuja todas las pantallas, formularios y botones usando React y Tailwind CSS.",
+        talksTo: "Se comunica con backend/ a través de services/api.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-public",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🖼️",
+        name: "frontend/public/img/",
+        badge: "Cuarto de Logotipos",
+        analogy: "Es la bodega donde se guardan los escudos y carteles oficiales de Proveo.",
+        whatItDoes: "Guarda logo_proveo.png, logo_proveo_transparente.png y logo_proveo.svg.",
+        talksTo: "Los muestra Navbar.jsx en la esquina superior izquierda.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-components",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🧭",
+        name: "frontend/src/components/ (Navbar.jsx)",
+        badge: "Barra de Navegación",
+        analogy: "Es el letrero luminoso que siempre está fijo en el techo de todas las habitaciones para que nunca te pierdas.",
+        whatItDoes: "Muestra el logo de Proveo, la barra visual de búsqueda y cambia automáticamente: si no has entrado muestra 'Iniciar Sesión / Regístrate', y si ya entraste dice 'Hola, [Tu Nombre]' y 'Salir'.",
+        talksTo: "Aparece arriba de todas las páginas dentro de App.jsx.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-pages",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🚪",
+        name: "frontend/src/pages/ (Las Habitaciones)",
+        badge: "Pantallas del Usuario",
+        analogy: "Son los 3 salones principales a los que puedes entrar caminando por la página.",
+        whatItDoes: "Agrupa las vistas de Login.jsx, Register.jsx y ProfileEdit.jsx.",
+        talksTo: "Son mostradas por App.jsx según la dirección web.",
+        status: "✅ Activo"
+      },
+      {
+        id: "page-register",
+        zone: "frontend",
+        isFolder: false,
+        level: 3,
+        icon: "📝",
+        name: "Register.jsx",
+        badge: "Ventanilla de Registro",
+        analogy: "Es la mesa de bienvenida donde eliges con dos tarjetas grandes si buscas ayuda (Cliente) u ofreces tus servicios (Proveedor).",
+        whatItDoes: "Pide tu nombre, correo, teléfono de 10 dígitos y contraseña segura, y los envía a /api/v1/auth/registro.",
+        talksTo: "Usa api.js para hablar con authController.js y luego te lleva a Login.jsx.",
+        status: "✅ Activo"
+      },
+      {
+        id: "page-login",
+        zone: "frontend",
+        isFolder: false,
+        level: 3,
+        icon: "🔐",
+        name: "Login.jsx",
+        badge: "Puerta de Acceso",
+        analogy: "Es la caseta de entrada donde muestras tu correo y contraseña para recibir tu pulsera mágica (Token).",
+        whatItDoes: "Envía tus datos a /api/v1/auth/login, guarda tu gafete digital en la memoria del navegador (localStorage) y te redirige a tu perfil o al inicio.",
+        talksTo: "Usa api.js para hablar con authController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "page-profile",
+        zone: "frontend",
+        isFolder: false,
+        level: 3,
+        icon: "🎨",
+        name: "ProfileEdit.jsx",
+        badge: "Taller del Proveedor",
+        analogy: "Es el estudio personal del proveedor donde decora su escaparate, escribe qué oficio hace, cuánto cobra y cuelga hasta 5 fotos de sus mejores trabajos.",
+        whatItDoes: "Carga los datos actuales del proveedor, muestra vistas previas de las fotos y envía todo al Backend cuando presionas 'Guardar cambios'.",
+        talksTo: "Usa api.js para hablar con proveedorRoutes.js (/perfil y /perfil/imagenes).",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-services",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🏍️",
+        name: "frontend/src/services/ (api.js)",
+        badge: "El Mensajero en Moto",
+        analogy: "Es un repartidor ultrarrápido que lleva cartas entre el Salón de Juegos (Frontend) y el Cuarto de Control (Backend).",
+        whatItDoes: "api.js configura Axios apuntando a http://localhost:3000/api/v1. También están authService.js y proveedorService.js listos para usarse después.",
+        talksTo: "Conecta Register.jsx, Login.jsx y ProfileEdit.jsx con el Backend.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-core",
+        zone: "frontend",
+        isFolder: false,
+        level: 2,
+        icon: "⚡",
+        name: "App.jsx, main.jsx, index.html y configs",
+        badge: "Cimientos de la Pantalla",
+        analogy: "Son los cables eléctricos, el mapa de pasillos (App.jsx) y las cubetas de pintura (Tailwind y Vite) que hacen que la página se vea bonita y rápida.",
+        whatItDoes: "index.html es el lienzo base, main.jsx enciende React, App.jsx maneja las rutas (/, /login, /register, /perfil) y vite.config.js arranca el servidor visual.",
+        talksTo: "Sostienen toda la carpeta frontend/.",
+        status: "✅ Activo"
+      }
+    ];
+
+    const flows = {
+      registro: [
+        { step: "1. Llenas tus datos", file: "frontend/.../Register.jsx", icon: "📝", desc: "Eliges Cliente o Proveedor, escribes tu teléfono y contraseña." },
+        { step: "2. Sale el mensajero", file: "frontend/.../api.js", icon: "🏍️", desc: "Lleva tu formulario por internet hacia el puerto 3000." },
+        { step: "3. Letrero de entrada", file: "backend/.../authRoutes.js", icon: "🪧", desc: "Recibe el paquete en /registro y lo pasa al gerente." },
+        { step: "4. Revisión con lupa", file: "backend/.../authController.js", icon: "👔", desc: "Usa mexicanPhone y passwordPolicy, y revuelve la contraseña." },
+        { step: "5. A la Caja Fuerte", file: "backend/src/db.js (MySQL)", icon: "📦", desc: "Guarda tu usuario en proveo_db y te deja iniciar sesión." }
+      ],
+      perfil: [
+        { step: "1. Editas y subes fotos", file: "frontend/.../ProfileEdit.jsx", icon: "🎨", desc: "Escribes tu oficio, código postal y eliges tus fotos." },
+        { step: "2. Guardia de Gafetes", file: "backend/.../auth.js y roles.js", icon: "🪪", desc: "Verifican que tengas sesión activa y seas Proveedor." },
+        { step: "3. Rayos X de Fotos", file: "backend/.../profileImageUpload.js", icon: "📸", desc: "Revisa que pesen menos de 5MB y las guarda en uploads/." },
+        { step: "4. Gerente valida", file: "backend/.../proveedorController.js", icon: "🛠️", desc: "Comprueba el código postal de 5 dígitos y el link de Maps." },
+        { step: "5. Bibliotecario guarda", file: "backend/.../proveedorRepository.js", icon: "📚", desc: "Actualiza las tablas usuarios y perfiles_proveedor en MySQL." }
+      ]
+    };
+
+    let currentFilter = 'all';
+    let selectedId = 'root-folder';
+
+    function renderTree() {
+      const container = document.getElementById('file-tree');
+      const filtered = projectFiles.filter(f => currentFilter === 'all' || f.zone === currentFilter);
+
+      container.innerHTML = filtered.map(item => {
+        const isSelected = item.id === selectedId;
+        const indent = item.level * 16;
+        const zoneColor =
+          item.zone === 'root' ? 'text-amber-400' :
+          item.zone === 'backend' ? 'text-purple-400' : 'text-indigo-400';
+
+        return `
+          <button
+            onclick="selectFile('${item.id}')"
+            style="padding-left: ${indent + 12}px"
+            class="w-full text-left py-2.5 pr-3 rounded-xl mb-1 flex items-center justify-between transition-all ${
+              isSelected
+                ? 'bg-gradient-to-r from-purple-600/30 to-indigo-600/20 border border-purple-500/50 text-white shadow-md'
+                : 'hover:bg-slate-900 text-slate-300 border border-transparent'
+            }"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <span class="text-lg shrink-0">${item.icon}</span>
+              <span class="text-xs md:text-sm ${item.isFolder ? 'font-bold ' + zoneColor : 'font-medium'} truncate">
+                ${item.name}
+              </span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-400 shrink-0 ml-2">
+              ${item.badge}
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectFile(id) {
+      selectedId = id;
+      renderTree();
+      const item = projectFiles.find(f => f.id === id) || projectFiles[0];
+      const detail = document.getElementById('file-detail');
+
+      const zoneBadge =
+        item.zone === 'root' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' :
+        item.zone === 'backend' ? 'bg-purple-500/10 text-purple-300 border-purple-500/30' :
+        'bg-indigo-500/10 text-indigo-300 border-indigo-500/30';
+
+      detail.innerHTML = `
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <span class="px-3 py-1 rounded-full text-xs font-bold border ${zoneBadge}">
+              ${item.badge}
+            </span>
+            <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300">
+              ${item.status}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-4xl shadow-inner shrink-0">
+              ${item.icon}
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                ${item.isFolder ? '📁 Carpeta del Proyecto' : '📄 Archivo de Código'}
+              </p>
+              <h3 class="text-2xl md:text-3xl font-extrabold text-white break-all">${item.name}</h3>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-slate-950/80 border border-purple-500/30 rounded-2xl p-5">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1">
+                🎈 Imagínalo así (Explicación para niños):
+              </h4>
+              <p class="text-slate-100 text-base leading-relaxed font-medium">
+                "${item.analogy}"
+              </p>
+            </div>
+
+            <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">
+                ⚙️ ¿Cuál es su trabajo dentro de la página?
+              </h4>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                ${item.whatItDoes}
+              </p>
+            </div>
+
+            <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">
+                🤝 ¿Con qué otros archivos platica?
+              </h4>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                ${item.talksTo}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span>💡 Tip: Haz clic en otro archivo de la lista izquierda para explorarlo.</span>
+          <span class="text-purple-400 font-semibold">ProveoWeb Explorer</span>
+        </div>
+      `;
+    }
+
+    function filterZone(zone) {
+      currentFilter = zone;
+      ['all', 'root', 'backend', 'frontend'].forEach(z => {
+        const btn = document.getElementById('btn-' + z);
+        if (z === zone) {
+          btn.className = "px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white transition";
+        } else {
+          btn.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+        }
+      });
+      const firstMatch = projectFiles.find(f => zone === 'all' || f.zone === zone);
+      if (firstMatch) selectedId = firstMatch.id;
+      renderTree();
+      selectFile(selectedId);
+    }
+
+    function showFlow(type) {
+      const btnReg = document.getElementById('flow-btn-registro');
+      const btnPerf = document.getElementById('flow-btn-perfil');
+      if (type === 'registro') {
+        btnReg.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition";
+        btnPerf.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+      } else {
+        btnPerf.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition";
+        btnReg.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+      }
+
+      const container = document.getElementById('flow-steps');
+      container.innerHTML = flows[type].map((item, idx) => `
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 relative flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-2xl">${item.icon}</span>
+              <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">Paso ${idx + 1}</span>
+            </div>
+            <h4 class="font-bold text-white text-sm mb-1">${item.step}</h4>
+            <p class="text-xs text-slate-400 leading-relaxed mb-3">${item.desc}</p>
+          </div>
+          <div class="text-[11px] font-mono bg-slate-900 border border-slate-800 text-purple-300 px-2.5 py-1.5 rounded-lg truncate">
+            📄 ${item.file}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Inicializar vista
+    renderTree();
+    selectFile('root-folder');
+    showFlow('registro');
+  </script>
+</body>
+</html>
+</file>
+
+<file path="ProveoWeb/index.js">
+require('./backend/index');
+</file>
+
+<file path="ProveoWeb/package.json">
+{
+  "name": "proveo",
+  "version": "1.0.0",
+  "description": "Backend de Proveo",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "nodemon backend/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
+</file>
+
+<file path="ProveoWeb/README.md">
+# Proveo
+
+Aplicación web para conectar clientes con proveedores de servicios. El repositorio contiene una interfaz React/Vite y una API Node.js/Express con PostgreSQL.
+
+## Cambios documentados por historia de usuario
+
+### HU 01: Registro e inicio de sesión
+
+**Objetivo:** permitir que clientes y proveedores creen una cuenta e inicien sesión con el tipo de cuenta correspondiente.
+
+- El formulario de registro permite elegir entre los roles `cliente` y `proveedor` y solicita nombre, correo, teléfono y contraseña.
+- La API normaliza el correo y el teléfono mexicano antes de guardarlos. Rechaza correos o teléfonos que ya pertenecen a otra cuenta; hay índices únicos en la base de datos para reforzar esta validación.
+- La contraseña se valida en el navegador y en el servidor: debe tener entre 10 y 18 caracteres e incluir una mayúscula, un número y un símbolo. Este requisito es más estricto que el mínimo de ocho caracteres planteado inicialmente.
+- Las contraseñas se guardan como hash y no en texto plano. El inicio de sesión valida las credenciales, el rol elegido y que la cuenta esté activa.
+- Al iniciar sesión, la API entrega un token JWT con vigencia de siete días. La interfaz conserva el token y los datos públicos de la cuenta en el almacenamiento local; los proveedores van a `/perfil` y los clientes a la página de inicio.
+- Los errores de validación, credenciales y duplicados se muestran en los formularios. Se incluye un control para mostrar u ocultar la contraseña.
+
+**API:** `POST /api/v1/auth/registro` y `POST /api/v1/auth/login`.
+
+**Alcance pendiente:** el registro no verifica todavía que la persona controle su correo o teléfono; para ello se requiere integrar servicios de correo/SMS y el flujo de confirmación.
+
+### HU 03: Creación y edición del perfil de proveedor
+
+**Objetivo:** permitir que un proveedor complete y actualice la información con la que presenta sus servicios.
+
+- La ruta `/perfil` carga el perfil del proveedor autenticado y permite guardar cambios. Si no hay sesión válida, se redirige al inicio de sesión; una cuenta que no sea proveedora vuelve a la página de inicio.
+- El formulario incluye nombre, nombre del negocio, tipo de servicio/oficio, formación o experiencia, descripción, servicio a domicilio, colonia, código postal, teléfono, precio o cotización, enlace de Google Maps, foto de perfil y hasta cinco fotos de trabajos.
+- Se validan en el servidor los campos obligatorios, longitudes, código postal mexicano de cinco dígitos, teléfono, URL de Google Maps, formato y cantidad de imágenes, y la relación entre la opción de cotización y el costo.
+- Las imágenes aceptadas son JPG, PNG o WEBP, con un máximo de 5 MB cada una. Se guardan en `backend/uploads/`, que no se versiona; la interfaz muestra vistas previas y permite quitar imágenes de la galería antes de guardar.
+- El perfil se consulta y actualiza con `GET` y `PUT /api/v1/proveedores/perfil`; la carga de imágenes usa `POST /api/v1/proveedores/perfil/imagenes`. Las rutas del perfil requieren token Bearer y rol de proveedor. La respuesta de guardado devuelve los datos actualizados.
+- La API también ofrece `GET /api/v1/proveedores/buscar` para buscar por ubicación, radio y categoría. La barra de búsqueda está presente en la interfaz, pero aún no está conectada a este endpoint.
+- Las migraciones agregan campos de perfil e índices únicos para correo y teléfono. La configuración y el orden de aplicación se describen en [backend/README.md](backend/README.md).
+
+**Nota de alcance:** el repositorio incluye el formulario de edición y la API que persiste y devuelve el perfil, pero la interfaz actual no tiene una página pública independiente para visualizarlo. Por tanto, la visualización pública inmediata aún no está cubierta por la aplicación.
+
+### HU 04: Interfaz inicial general (Layout)
+
+**Objetivo:** proporcionar una estructura común de navegación y una experiencia visual consistente.
+
+- La aplicación usa React Router y comparte la barra de navegación en las vistas de inicio, registro, inicio de sesión y perfil.
+- La barra incorpora la marca y el logotipo de Proveo, accesos para iniciar sesión y registrarse cuando no hay sesión, y saludo, enlace al perfil de proveedor y cierre de sesión cuando la hay.
+- La navegación y los formularios usan estilos utilitarios Tailwind con una paleta coherente azul/gris, estados de carga y mensajes de error o confirmación.
+- Los formularios reorganizan sus campos con rejillas adaptables y la navegación oculta el área de búsqueda en pantallas pequeñas para adecuarse a móviles y escritorio. El campo de búsqueda es visual; no inicia una búsqueda desde la interfaz actual.
+
+## Estructura y tecnologías
+
+- `frontend/`: interfaz React, Vite, React Router y Tailwind CSS.
+- `backend/`: API Express, PostgreSQL, autenticación JWT, hash de contraseñas y carga de imágenes.
+- `backend/migrations/`: cambios incrementales al esquema de la base de datos.
+- `backend/test/`: pruebas unitarias de la política de contraseñas y normalización de teléfonos mexicanos.
+
+## Desarrollo local
+
+Instala las dependencias con `npm install` en `backend/` y `frontend/`. Configura la base PostgreSQL, las variables de entorno y ejecuta las migraciones siguiendo [backend/README.md](backend/README.md). Después, desde la raíz:
+
+```powershell
+npm --prefix backend start
+npm --prefix frontend run dev
+```
+
+Las pruebas unitarias del backend se ejecutan con:
+
+```powershell
+npm --prefix backend test
+```
+</file>
+
+</files>
