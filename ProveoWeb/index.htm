@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explorador Mágico de Carpetas - ProveoWeb 🏰</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-purple-500 selection:text-white pb-20">
+
+  <!-- CABECERA -->
+  <header class="max-w-7xl mx-auto px-6 pt-10 pb-6 text-center">
+    <span class="inline-block bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-3">
+      🗂️ Mapa Completo de Carpetas y Archivos (Explicado para Niños)
+    </span>
+    <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
+      La Ciudad Por Dentro: <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400">ProveoWeb</span>
+    </h1>
+    <p class="text-slate-400 text-base md:text-lg max-w-3xl mx-auto">
+      Haz clic en cualquier carpeta o archivo del explorador para descubrir qué pieza del rompecabezas es, qué trabajo hace y con quién platica.
+    </p>
+  </header>
+
+  <!-- RESUMEN DE LAS 3 TORRES -->
+  <section class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
+    <div class="animate-float bg-gradient-to-b from-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-3xl p-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-2xl">🏰</div>
+        <div>
+          <span class="text-indigo-400 text-[11px] font-bold uppercase tracking-wider">Carpeta /frontend</span>
+          <h2 class="text-xl font-bold text-white">La Fachada (Salón)</h2>
+        </div>
+      </div>
+      <p class="text-slate-300 text-xs leading-relaxed">
+        Es la tienda de enfrente con vitrinas y botones de colores. Aquí entran los clientes y proveedores desde su navegador.
+      </p>
+    </div>
+
+    <div class="animate-float [animation-delay:1.2s] bg-gradient-to-b from-purple-950/60 to-slate-900 border border-purple-500/30 rounded-3xl p-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-2xl">🤖</div>
+        <div>
+          <span class="text-purple-400 text-[11px] font-bold uppercase tracking-wider">Carpeta /backend</span>
+          <h2 class="text-xl font-bold text-white">El Cuarto de Control</h2>
+        </div>
+      </div>
+      <p class="text-slate-300 text-xs leading-relaxed">
+        La oficina secreta donde trabajan los guardias, inspectores de fotos y gerentes que revisan que nadie haga trampa.
+      </p>
+    </div>
+
+    <div class="animate-float [animation-delay:2.4s] bg-gradient-to-b from-amber-950/60 to-slate-900 border border-amber-500/30 rounded-3xl p-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-2xl">📦</div>
+        <div>
+          <span class="text-amber-400 text-[11px] font-bold uppercase tracking-wider">MySQL + /migrations</span>
+          <h2 class="text-xl font-bold text-white">La Caja Fuerte</h2>
+        </div>
+      </div>
+      <p class="text-slate-300 text-xs leading-relaxed">
+        La bóveda subterránea en XAMPP donde se guardan bajo llave todos los usuarios, contraseñas y perfiles.
+      </p>
+    </div>
+  </section>
+
+  <!-- EXPLORADOR INTERACTIVO ESTILO VS CODE -->
+  <main class="max-w-7xl mx-auto px-6 mt-8">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+      
+      <!-- Barra Superior de Ventana -->
+      <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-full bg-rose-500"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-amber-500"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
+          <span class="ml-3 text-sm font-bold text-slate-200">🔍 Rayos X del Proyecto: Haz clic en cualquier archivo de la izquierda</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="filterZone('all')" id="btn-all" class="px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white transition">Todos</button>
+          <button onclick="filterZone('root')" id="btn-root" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🏠 Raíz</button>
+          <button onclick="filterZone('backend')" id="btn-backend" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🤖 Backend</button>
+          <button onclick="filterZone('frontend')" id="btn-frontend" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🏰 Frontend</button>
+        </div>
+      </div>
+
+      <!-- Cuerpo del Explorador: Árbol Izquierdo + Explicación Derecha -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
+        
+        <!-- COLUMNA IZQUIERDA: ÁRBOL DE CARPETAS Y ARCHIVOS -->
+        <aside class="lg:col-span-5 bg-slate-950/70 border-r border-slate-800 p-4 overflow-y-auto max-h-[600px] custom-scroll" id="file-tree">
+          <!-- Se llena dinámicamente con JS -->
+        </aside>
+
+        <!-- COLUMNA DERECHA: VISOR DE EXPLICACIÓN PARA NIÑOS -->
+        <section class="lg:col-span-7 p-8 flex flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30" id="file-detail">
+          <!-- Se llena dinámicamente al hacer clic -->
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- MAPA DE CONEXIONES: ¿CÓMO VIAJA LA INFORMACIÓN ENTRE ARCHIVOS? -->
+  <section class="max-w-7xl mx-auto px-6 mt-12">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl">
+      <div class="text-center mb-8">
+        <span class="text-emerald-400 text-xs font-bold uppercase tracking-widest">El Trabajo en Equipo</span>
+        <h3 class="text-2xl font-bold text-white mt-1">¿Cómo se pasan la pelota los archivos cuando haces algo?</h3>
+        <p class="text-slate-400 text-sm mt-1">Elige una misión para iluminar qué archivos trabajan juntos paso a paso:</p>
+      </div>
+
+      <!-- Botones de Misión -->
+      <div class="flex flex-wrap justify-center gap-3 mb-8">
+        <button onclick="showFlow('registro')" id="flow-btn-registro" class="px-5 py-2.5 rounded-2xl text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition">
+          🎟️ Misión 1: Registrarse e Iniciar Sesión
+        </button>
+        <button onclick="showFlow('perfil')" id="flow-btn-perfil" class="px-5 py-2.5 rounded-2xl text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+          🛠️ Misión 2: Guardar Perfil y Subir Fotos
+        </button>
+      </div>
+
+      <!-- Contenedor de Pasos del Flujo -->
+      <div id="flow-steps" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- Se llena dinámicamente con JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- DATOS Y LÓGICA INTERACTIVA -->
+  <script>
+    const projectFiles = [
+      // ================= RAÍZ =================
+      {
+        id: "root-folder",
+        zone: "root",
+        isFolder: true,
+        level: 0,
+        icon: "🏠",
+        name: "ProveoWeb/ (Carpeta Principal)",
+        badge: "Terreno Principal",
+        analogy: "Es el terreno gigante donde está construido todo el parque de diversiones.",
+        whatItDoes: "Guarda adentro las dos torres grandes (backend y frontend) y los manuales e interruptores principales.",
+        talksTo: "Contiene a todas las demás carpetas del proyecto.",
+        status: "✅ Activo"
+      },
+      {
+        id: "env",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🔑",
+        name: ".env",
+        badge: "Llaves Secretas",
+        analogy: "Es una hojita secreta guardada en el bolsillo del director con la combinación de la caja fuerte.",
+        whatItDoes: "Le dice al Backend en qué puerta está MySQL (puerto 3307), cómo se llama la base de datos (proveo_db) y cuál es el usuario (root).",
+        talksTo: "Lo lee backend/index.js y backend/src/db.js al encender el servidor.",
+        status: "✅ Activo"
+      },
+      {
+        id: "gitignore",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🛑",
+        name: ".gitignore",
+        badge: "Guardia de Secretos",
+        analogy: "Es una lista de cosas prohibidas que NO se deben subir a internet por seguridad.",
+        whatItDoes: "Evita que tus contraseñas (.env), las fotos privadas de usuarios (uploads/) y las carpetas pesadas (node_modules/) se suban a GitHub.",
+        talksTo: "Vigila a Git cuando guardas cambios del proyecto.",
+        status: "✅ Activo"
+      },
+      {
+        id: "docker-compose",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🐳",
+        name: "docker-compose.yml",
+        badge: "Robot Constructor",
+        analogy: "Es una caja mágica de Lego que arma las 3 torres (Base de datos, Backend y Frontend) sola con presionar un botón.",
+        whatItDoes: "Configura contenedores automáticos para MySQL, el servidor Node y la página React sin instalarlos a mano.",
+        talksTo: "Conecta los contenedores de db, backend y frontend.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-index-htm",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🗺️",
+        name: "index.htm",
+        badge: "Mapa Visual",
+        analogy: "¡Es este mismo cartel interactivo que estás mirando ahora mismo!",
+        whatItDoes: "Te muestra de forma colorida y sencilla cómo funciona cada rincón de ProveoWeb.",
+        talksTo: "Lo abres directamente en tu navegador web.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-index-js",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "🔘",
+        name: "index.js (Raíz)",
+        badge: "Botón de Arranque",
+        analogy: "Es un control remoto con un solo botón que enciende el motor del Backend desde la entrada.",
+        whatItDoes: "Llama directamente al archivo backend/index.js para encender el servidor.",
+        talksTo: "Despierta a backend/index.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-package",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "📋",
+        name: "package.json y package-lock.json",
+        badge: "Lista de Herramientas",
+        analogy: "Es el inventario de cajas de herramientas que se compraron para construir el edificio.",
+        whatItDoes: "Anota qué programas necesita Node.js y qué comandos rápidos existen (como start y dev).",
+        talksTo: "Trabaja junto con npm cuando instalas paquetes.",
+        status: "✅ Activo"
+      },
+      {
+        id: "root-readme",
+        zone: "root",
+        isFolder: false,
+        level: 1,
+        icon: "📘",
+        name: "README.md y repomix-output.xml",
+        badge: "Manual y Radiografía",
+        analogy: "El README es el instructivo del juguete y el archivo XML es una foto de rayos X de todo el código junto.",
+        whatItDoes: "Explican las historias de usuario (registro, perfil, barra de navegación) y empaquetan el proyecto para analizarlo.",
+        talksTo: "Sirven de guía para los programadores.",
+        status: "✅ Activo"
+      },
+
+      // ================= BACKEND =================
+      {
+        id: "backend-folder",
+        zone: "backend",
+        isFolder: true,
+        level: 1,
+        icon: "🤖",
+        name: "backend/ (El Cuarto de Control)",
+        badge: "Torre del Servidor",
+        analogy: "Es el edificio de oficinas privadas donde trabajan los guardias, inspectores y bibliotecarios.",
+        whatItDoes: "Recibe las peticiones del Frontend, verifica que todo sea seguro y guarda los datos en MySQL.",
+        talksTo: "Escucha a frontend/ y guarda en la base de datos MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-migrations",
+        zone: "backend",
+        isFolder: true,
+        level: 2,
+        icon: "📐",
+        name: "backend/migrations/",
+        badge: "Planos de la Bóveda",
+        analogy: "Es el tubo donde los arquitectos guardan los planos para construir los cajones de la caja fuerte.",
+        whatItDoes: "Guarda los archivos SQL que crean las tablas de la base de datos.",
+        talksTo: "Se importa dentro de phpMyAdmin / MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "sql-mysql",
+        zone: "backend",
+        isFolder: false,
+        level: 3,
+        icon: "🗄️",
+        name: "001_esquema_mysql.sql",
+        badge: "Plano Maestro MySQL",
+        analogy: "Es el instructivo exacto que usaste en phpMyAdmin para fabricar los archiveros de la base de datos.",
+        whatItDoes: "Crea las 7 tablas en MySQL: usuarios, perfiles_proveedor, categorias, proveedor_categorias, servicios, solicitudes, mensajes_chat y resenas.",
+        talksTo: "Construye las tablas que luego usan authController.js y proveedorRepository.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-src",
+        zone: "backend",
+        isFolder: true,
+        level: 2,
+        icon: "🧠",
+        name: "backend/src/",
+        badge: "El Cerebro del Servidor",
+        analogy: "Es el piso principal de oficinas dentro del Cuarto de Control, dividido por departamentos.",
+        whatItDoes: "Organiza a los gerentes (controllers), guardias (middlewares), bibliotecarios (repositories) y pasillos (routes).",
+        talksTo: "Conecta a backend/index.js con todas las tareas del sistema.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-controllers",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "👔",
+        name: "src/controllers/ (Los Gerentes)",
+        badge: "Toma de Decisiones",
+        analogy: "Son los gerentes sentados en su escritorio que revisan cada solicitud hoja por hoja antes de sellarla de aprobado.",
+        whatItDoes: "Contiene a authController.js y proveedorController.js.",
+        talksTo: "Recibe órdenes de routes/ y manda a guardar a repositories/ o db.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "auth-controller",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🎟️",
+        name: "authController.js",
+        badge: "Gerente de Cuentas",
+        analogy: "Es el encargado del club que inscribe a los socios nuevos y les da su pulsera mágica (Token) cuando entran.",
+        whatItDoes: "Revisa que el correo y teléfono no estén repetidos, convierte la contraseña en código secreto (hash con bcrypt) y crea la sesión de 7 días.",
+        talksTo: "Usa mexicanPhone.js, passwordPolicy.js y guarda en la tabla usuarios de MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "proveedor-controller",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🛠️",
+        name: "proveedorController.js",
+        badge: "Gerente de Proveedores",
+        analogy: "Es el supervisor que revisa que el currículum del carpintero o plomero tenga código postal válido, enlace real de Google Maps y fotos permitidas.",
+        whatItDoes: "Valida todos los datos del perfil del proveedor, procesa la subida de imágenes y coordina la búsqueda de proveedores.",
+        talksTo: "Platica con proveedorRepository.js y mexicanPhone.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-middlewares",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "🛡️",
+        name: "src/middlewares/ (Los Guardias)",
+        badge: "Filtros de Seguridad",
+        analogy: "Son los guardias de seguridad parados en los pasillos que piden tu gafete y revisan tus mochilas antes de dejarte pasar.",
+        whatItDoes: "Protegen las rutas privadas del servidor.",
+        talksTo: "Trabajan entre routes/ y controllers/.",
+        status: "✅ Activo"
+      },
+      {
+        id: "mw-auth",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🪪",
+        name: "auth.js",
+        badge: "Inspector de Gafetes",
+        analogy: "Es el guardia con lector láser que revisa que tu pulsera digital (Token JWT) sea auténtica y no haya vencido.",
+        whatItDoes: "Lee el encabezado Authorization Bearer y descubre quién eres (tu ID y tu rol).",
+        talksTo: "Protege las rutas de proveedorRoutes.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "mw-roles",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🚧",
+        name: "roles.js",
+        badge: "Guardia de Áreas VIP",
+        analogy: "Revisa el color de tu casco: si dice 'cliente', no te deja entrar al taller exclusivo de 'proveedor'.",
+        whatItDoes: "Bloquea con error 403 a cualquier usuario que intente entrar a una función que no corresponde a su rol.",
+        talksTo: "Trabaja después de auth.js en proveedorRoutes.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "mw-upload",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "📸",
+        name: "profileImageUpload.js",
+        badge: "Inspector de Fotos",
+        analogy: "Es un guardia con rayos X que revisa que las fotos que subes sean imágenes reales (JPG, PNG, WEBP) y no pesen más de 5 megas.",
+        whatItDoes: "Recibe 1 foto de perfil y hasta 5 fotos de trabajo, les pone un nombre único al azar y las guarda en la carpeta backend/uploads/.",
+        talksTo: "Le entrega las direcciones de las fotos listas a proveedorController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-repos",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "📚",
+        name: "src/repositories/ (Bibliotecario)",
+        badge: "Acceso a Caja Fuerte",
+        analogy: "Es el único empleado con llaves para entrar a la bóveda de MySQL a buscar o guardar carpetas.",
+        whatItDoes: "Aísla las consultas SQL de los perfiles de proveedor.",
+        talksTo: "Conecta a proveedorController.js con db.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "proveedor-repo",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🗂️",
+        name: "proveedorRepository.js",
+        badge: "Archivista de Perfiles",
+        analogy: "Sabe exactamente en qué cajón de MySQL está el perfil de cada proveedor para leerlo o actualizarlo.",
+        whatItDoes: "Ejecuta los SELECT, INSERT y UPDATE en las tablas usuarios y perfiles_proveedor usando transacciones seguras.",
+        talksTo: "Usa db.js para hablar con MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-routes",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "🪧",
+        name: "src/routes/ (Los Letreros)",
+        badge: "Mapa de Puertas",
+        analogy: "Son los letreros en los pasillos que dicen: 'Para registrarse vaya a la ventanilla 1, para editar perfil vaya a la ventanilla 2'.",
+        whatItDoes: "Conecta las direcciones web (URLs) con los guardias y gerentes correspondientes.",
+        talksTo: "Se conectan en backend/index.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "routes-files",
+        zone: "backend",
+        isFolder: false,
+        level: 4,
+        icon: "🛣️",
+        name: "authRoutes.js y proveedorRoutes.js",
+        badge: "Pasillos de la API",
+        analogy: "Son las dos avenidas principales dentro del Cuarto de Control.",
+        whatItDoes: "authRoutes abre /registro y /login; proveedorRoutes abre /buscar, /perfil y /perfil/imagenes.",
+        talksTo: "Dirigen las visitas hacia authController.js y proveedorController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-utils",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "📏",
+        name: "src/utils/ (Reglas de Bolsillo)",
+        badge: "Validadores Rápidos",
+        analogy: "Son dos reglas de medir que usan los gerentes para comprobar teléfonos y contraseñas.",
+        whatItDoes: "Contiene mexicanPhone.js (limpia teléfonos a 10 dígitos con +52) y passwordPolicy.js (exige 10-18 caracteres, mayúscula, número y símbolo).",
+        talksTo: "Ayudan a authController.js y proveedorController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-future",
+        zone: "backend",
+        isFolder: true,
+        level: 3,
+        icon: "🏗️",
+        name: "src/services/ y src/sockets/",
+        badge: "Cuartos para el Futuro",
+        analogy: "Son habitaciones nuevas que ya tienen piso y techo, pero están esperando que lleguen los muebles.",
+        whatItDoes: "Contienen solicitud_service.js, resena_service.js y chat.js (actualmente vacíos, listos para la siguiente etapa del proyecto).",
+        talksTo: "Próximamente conectarán las tablas solicitudes, resenas y mensajes_chat.",
+        status: "🚧 En construcción"
+      },
+      {
+        id: "backend-db",
+        zone: "backend",
+        isFolder: false,
+        level: 3,
+        icon: "🔌",
+        name: "src/db.js",
+        badge: "Cable a MySQL",
+        analogy: "Es el teléfono rojo directo entre el Cuarto de Control y la Caja Fuerte de XAMPP.",
+        whatItDoes: "Crea el grupo de conexiones (pool) con mysql2 y maneja las transacciones (para que si algo falla a la mitad, no se guarden datos incompletos).",
+        talksTo: "Conecta a authController.js y proveedorRepository.js con MySQL.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-index",
+        zone: "backend",
+        isFolder: false,
+        level: 2,
+        icon: "🚀",
+        name: "backend/index.js",
+        badge: "Motor Principal Backend",
+        analogy: "Es el interruptor maestro que prende las luces del Cuarto de Control en el puerto 3000.",
+        whatItDoes: "Lee los archivos .env, crea la carpeta uploads/, activa los permisos CORS y conecta las rutas /api/v1/auth y /api/v1/proveedores.",
+        talksTo: "Es el corazón que une todo el backend.",
+        status: "✅ Activo"
+      },
+      {
+        id: "backend-tests",
+        zone: "backend",
+        isFolder: true,
+        level: 2,
+        icon: "🧪",
+        name: "backend/test/ (Robots Inspector)",
+        badge: "Control de Calidad",
+        analogy: "Son 3 robots científicos que hacen pruebas de laboratorio para asegurarse de que nada esté roto.",
+        whatItDoes: "Contiene mexicanPhone.test.js, passwordPolicy.test.js y providerAuthFlow.test.js (los que corriste con npm test y dieron 8 palomitas verdes).",
+        talksTo: "Prueban a utils/ y a authRoutes.js.",
+        status: "✅ Activo"
+      },
+
+      // ================= FRONTEND =================
+      {
+        id: "frontend-folder",
+        zone: "frontend",
+        isFolder: true,
+        level: 1,
+        icon: "🏰",
+        name: "frontend/ (El Salón de Juegos)",
+        badge: "Torre Visual",
+        analogy: "Es la tienda bonita con escaparates luminosos a donde entran las personas desde su navegador en el puerto 5173.",
+        whatItDoes: "Dibuja todas las pantallas, formularios y botones usando React y Tailwind CSS.",
+        talksTo: "Se comunica con backend/ a través de services/api.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-public",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🖼️",
+        name: "frontend/public/img/",
+        badge: "Cuarto de Logotipos",
+        analogy: "Es la bodega donde se guardan los escudos y carteles oficiales de Proveo.",
+        whatItDoes: "Guarda logo_proveo.png, logo_proveo_transparente.png y logo_proveo.svg.",
+        talksTo: "Los muestra Navbar.jsx en la esquina superior izquierda.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-components",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🧭",
+        name: "frontend/src/components/ (Navbar.jsx)",
+        badge: "Barra de Navegación",
+        analogy: "Es el letrero luminoso que siempre está fijo en el techo de todas las habitaciones para que nunca te pierdas.",
+        whatItDoes: "Muestra el logo de Proveo, la barra visual de búsqueda y cambia automáticamente: si no has entrado muestra 'Iniciar Sesión / Regístrate', y si ya entraste dice 'Hola, [Tu Nombre]' y 'Salir'.",
+        talksTo: "Aparece arriba de todas las páginas dentro de App.jsx.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-pages",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🚪",
+        name: "frontend/src/pages/ (Las Habitaciones)",
+        badge: "Pantallas del Usuario",
+        analogy: "Son los 3 salones principales a los que puedes entrar caminando por la página.",
+        whatItDoes: "Agrupa las vistas de Login.jsx, Register.jsx y ProfileEdit.jsx.",
+        talksTo: "Son mostradas por App.jsx según la dirección web.",
+        status: "✅ Activo"
+      },
+      {
+        id: "page-register",
+        zone: "frontend",
+        isFolder: false,
+        level: 3,
+        icon: "📝",
+        name: "Register.jsx",
+        badge: "Ventanilla de Registro",
+        analogy: "Es la mesa de bienvenida donde eliges con dos tarjetas grandes si buscas ayuda (Cliente) u ofreces tus servicios (Proveedor).",
+        whatItDoes: "Pide tu nombre, correo, teléfono de 10 dígitos y contraseña segura, y los envía a /api/v1/auth/registro.",
+        talksTo: "Usa api.js para hablar con authController.js y luego te lleva a Login.jsx.",
+        status: "✅ Activo"
+      },
+      {
+        id: "page-login",
+        zone: "frontend",
+        isFolder: false,
+        level: 3,
+        icon: "🔐",
+        name: "Login.jsx",
+        badge: "Puerta de Acceso",
+        analogy: "Es la caseta de entrada donde muestras tu correo y contraseña para recibir tu pulsera mágica (Token).",
+        whatItDoes: "Envía tus datos a /api/v1/auth/login, guarda tu gafete digital en la memoria del navegador (localStorage) y te redirige a tu perfil o al inicio.",
+        talksTo: "Usa api.js para hablar con authController.js.",
+        status: "✅ Activo"
+      },
+      {
+        id: "page-profile",
+        zone: "frontend",
+        isFolder: false,
+        level: 3,
+        icon: "🎨",
+        name: "ProfileEdit.jsx",
+        badge: "Taller del Proveedor",
+        analogy: "Es el estudio personal del proveedor donde decora su escaparate, escribe qué oficio hace, cuánto cobra y cuelga hasta 5 fotos de sus mejores trabajos.",
+        whatItDoes: "Carga los datos actuales del proveedor, muestra vistas previas de las fotos y envía todo al Backend cuando presionas 'Guardar cambios'.",
+        talksTo: "Usa api.js para hablar con proveedorRoutes.js (/perfil y /perfil/imagenes).",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-services",
+        zone: "frontend",
+        isFolder: true,
+        level: 2,
+        icon: "🏍️",
+        name: "frontend/src/services/ (api.js)",
+        badge: "El Mensajero en Moto",
+        analogy: "Es un repartidor ultrarrápido que lleva cartas entre el Salón de Juegos (Frontend) y el Cuarto de Control (Backend).",
+        whatItDoes: "api.js configura Axios apuntando a http://localhost:3000/api/v1. También están authService.js y proveedorService.js listos para usarse después.",
+        talksTo: "Conecta Register.jsx, Login.jsx y ProfileEdit.jsx con el Backend.",
+        status: "✅ Activo"
+      },
+      {
+        id: "frontend-core",
+        zone: "frontend",
+        isFolder: false,
+        level: 2,
+        icon: "⚡",
+        name: "App.jsx, main.jsx, index.html y configs",
+        badge: "Cimientos de la Pantalla",
+        analogy: "Son los cables eléctricos, el mapa de pasillos (App.jsx) y las cubetas de pintura (Tailwind y Vite) que hacen que la página se vea bonita y rápida.",
+        whatItDoes: "index.html es el lienzo base, main.jsx enciende React, App.jsx maneja las rutas (/, /login, /register, /perfil) y vite.config.js arranca el servidor visual.",
+        talksTo: "Sostienen toda la carpeta frontend/.",
+        status: "✅ Activo"
+      }
+    ];
+
+    const flows = {
+      registro: [
+        { step: "1. Llenas tus datos", file: "frontend/.../Register.jsx", icon: "📝", desc: "Eliges Cliente o Proveedor, escribes tu teléfono y contraseña." },
+        { step: "2. Sale el mensajero", file: "frontend/.../api.js", icon: "🏍️", desc: "Lleva tu formulario por internet hacia el puerto 3000." },
+        { step: "3. Letrero de entrada", file: "backend/.../authRoutes.js", icon: "🪧", desc: "Recibe el paquete en /registro y lo pasa al gerente." },
+        { step: "4. Revisión con lupa", file: "backend/.../authController.js", icon: "👔", desc: "Usa mexicanPhone y passwordPolicy, y revuelve la contraseña." },
+        { step: "5. A la Caja Fuerte", file: "backend/src/db.js (MySQL)", icon: "📦", desc: "Guarda tu usuario en proveo_db y te deja iniciar sesión." }
+      ],
+      perfil: [
+        { step: "1. Editas y subes fotos", file: "frontend/.../ProfileEdit.jsx", icon: "🎨", desc: "Escribes tu oficio, código postal y eliges tus fotos." },
+        { step: "2. Guardia de Gafetes", file: "backend/.../auth.js y roles.js", icon: "🪪", desc: "Verifican que tengas sesión activa y seas Proveedor." },
+        { step: "3. Rayos X de Fotos", file: "backend/.../profileImageUpload.js", icon: "📸", desc: "Revisa que pesen menos de 5MB y las guarda en uploads/." },
+        { step: "4. Gerente valida", file: "backend/.../proveedorController.js", icon: "🛠️", desc: "Comprueba el código postal de 5 dígitos y el link de Maps." },
+        { step: "5. Bibliotecario guarda", file: "backend/.../proveedorRepository.js", icon: "📚", desc: "Actualiza las tablas usuarios y perfiles_proveedor en MySQL." }
+      ]
+    };
+
+    let currentFilter = 'all';
+    let selectedId = 'root-folder';
+
+    function renderTree() {
+      const container = document.getElementById('file-tree');
+      const filtered = projectFiles.filter(f => currentFilter === 'all' || f.zone === currentFilter);
+
+      container.innerHTML = filtered.map(item => {
+        const isSelected = item.id === selectedId;
+        const indent = item.level * 16;
+        const zoneColor =
+          item.zone === 'root' ? 'text-amber-400' :
+          item.zone === 'backend' ? 'text-purple-400' : 'text-indigo-400';
+
+        return `
+          <button
+            onclick="selectFile('${item.id}')"
+            style="padding-left: ${indent + 12}px"
+            class="w-full text-left py-2.5 pr-3 rounded-xl mb-1 flex items-center justify-between transition-all ${
+              isSelected
+                ? 'bg-gradient-to-r from-purple-600/30 to-indigo-600/20 border border-purple-500/50 text-white shadow-md'
+                : 'hover:bg-slate-900 text-slate-300 border border-transparent'
+            }"
+          >
+            <div class="flex items-center gap-2.5 truncate">
+              <span class="text-lg shrink-0">${item.icon}</span>
+              <span class="text-xs md:text-sm ${item.isFolder ? 'font-bold ' + zoneColor : 'font-medium'} truncate">
+                ${item.name}
+              </span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-400 shrink-0 ml-2">
+              ${item.badge}
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectFile(id) {
+      selectedId = id;
+      renderTree();
+      const item = projectFiles.find(f => f.id === id) || projectFiles[0];
+      const detail = document.getElementById('file-detail');
+
+      const zoneBadge =
+        item.zone === 'root' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' :
+        item.zone === 'backend' ? 'bg-purple-500/10 text-purple-300 border-purple-500/30' :
+        'bg-indigo-500/10 text-indigo-300 border-indigo-500/30';
+
+      detail.innerHTML = `
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <span class="px-3 py-1 rounded-full text-xs font-bold border ${zoneBadge}">
+              ${item.badge}
+            </span>
+            <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300">
+              ${item.status}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-4xl shadow-inner shrink-0">
+              ${item.icon}
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                ${item.isFolder ? '📁 Carpeta del Proyecto' : '📄 Archivo de Código'}
+              </p>
+              <h3 class="text-2xl md:text-3xl font-extrabold text-white break-all">${item.name}</h3>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-slate-950/80 border border-purple-500/30 rounded-2xl p-5">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1">
+                🎈 Imagínalo así (Explicación para niños):
+              </h4>
+              <p class="text-slate-100 text-base leading-relaxed font-medium">
+                "${item.analogy}"
+              </p>
+            </div>
+
+            <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">
+                ⚙️ ¿Cuál es su trabajo dentro de la página?
+              </h4>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                ${item.whatItDoes}
+              </p>
+            </div>
+
+            <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">
+                🤝 ¿Con qué otros archivos platica?
+              </h4>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                ${item.talksTo}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span>💡 Tip: Haz clic en otro archivo de la lista izquierda para explorarlo.</span>
+          <span class="text-purple-400 font-semibold">ProveoWeb Explorer</span>
+        </div>
+      `;
+    }
+
+    function filterZone(zone) {
+      currentFilter = zone;
+      ['all', 'root', 'backend', 'frontend'].forEach(z => {
+        const btn = document.getElementById('btn-' + z);
+        if (z === zone) {
+          btn.className = "px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white transition";
+        } else {
+          btn.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+        }
+      });
+      const firstMatch = projectFiles.find(f => zone === 'all' || f.zone === zone);
+      if (firstMatch) selectedId = firstMatch.id;
+      renderTree();
+      selectFile(selectedId);
+    }
+
+    function showFlow(type) {
+      const btnReg = document.getElementById('flow-btn-registro');
+      const btnPerf = document.getElementById('flow-btn-perfil');
+      if (type === 'registro') {
+        btnReg.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition";
+        btnPerf.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+      } else {
+        btnPerf.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition";
+        btnReg.className = "px-5 py-2.5 rounded-2xl text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+      }
+
+      const container = document.getElementById('flow-steps');
+      container.innerHTML = flows[type].map((item, idx) => `
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 relative flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-2xl">${item.icon}</span>
+              <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">Paso ${idx + 1}</span>
+            </div>
+            <h4 class="font-bold text-white text-sm mb-1">${item.step}</h4>
+            <p class="text-xs text-slate-400 leading-relaxed mb-3">${item.desc}</p>
+          </div>
+          <div class="text-[11px] font-mono bg-slate-900 border border-slate-800 text-purple-300 px-2.5 py-1.5 rounded-lg truncate">
+            📄 ${item.file}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Inicializar vista
+    renderTree();
+    selectFile('root-folder');
+    showFlow('registro');
+  </script>
+</body>
+</html>
