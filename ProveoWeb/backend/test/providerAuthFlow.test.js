@@ -1,58 +1,75 @@
+// Actualacion Google Auth.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const originalDatabaseUrl = process.env.DATABASE_URL;
 const originalJwtSecret = process.env.JWT_SECRET;
+const originalGoogleClientId = process.env.GOOGLE_CLIENT_ID;
+
 process.env.DATABASE_URL ||= 'mysql://root:@127.0.0.1:3306/proveo_test';
 process.env.JWT_SECRET = 'test-provider-auth-flow-secret';
+process.env.GOOGLE_CLIENT_ID = 'test-client-id.apps.googleusercontent.com';
 
 const db = require('../src/db');
+const googleAuthService = require('../src/services/googleAuthService');
 const authRoutes = require('../src/routes/authRoutes');
 
-test('registers a provider with a profile and lets that provider log in', async () => {
+test('registers a provider via Google Auth and lets that provider log in again', async () => {
   const originalQuery = db.query;
   const originalTransaction = db.transaction;
+  const originalVerifyGoogleIdToken = googleAuthService.verifyGoogleIdToken;
+
   let user;
   let providerProfile;
 
+  googleAuthService.verifyGoogleIdToken = async (idToken) => {
+    assert.equal(idToken, 'valid-google-id-token');
+    return {
+      googleId: 'google-sub-12345',
+      email: 'proveedor@gmail.com',
+      emailVerified: true,
+      nombre: 'Proveedor de Prueba',
+    };
+  };
+
   db.query = async (sql, params) => {
-    if (sql.includes('email_exists')) {
-      return { rows: [{ email_exists: 0, telefono_exists: 0 }] };
-    }
-    if (sql.includes('FROM usuarios') && params[0] === user.email) {
-      return { rows: [{ ...user, estatus: 'activo' }] };
+    if (sql.includes('FROM usuarios')) {
+      if (user && (params[0] === user.google_id || params[1] === user.email)) {
+        return { rows: [{ ...user, estatus: 'activo' }] };
+      }
+      return { rows: [] };
     }
     throw new Error(`Unexpected database query: ${sql}`);
   };
 
-  db.transaction = async (callback) => callback({
-    query: async (sql, params) => {
-      if (sql.includes('INSERT INTO usuarios')) {
-        user = {
-          id: params[0],
-          nombre: params[1],
-          email: params[2],
-          telefono: params[3],
-          password_hash: params[4],
-          rol: params[5],
-        };
-        return { rows: [] };
-      }
-      if (sql.includes('INSERT INTO perfiles_proveedor')) {
-        providerProfile = {
-          usuario_id: params[0],
-          telefono: params[1],
-          fotos_trabajo: params[2],
-        };
-        return { rows: [] };
-      }
-      throw new Error(`Unexpected transaction query: ${sql}`);
-    },
-  });
+  db.transaction = async (callback) =>
+    callback({
+      query: async (sql, params) => {
+        if (sql.includes('INSERT INTO usuarios')) {
+          user = {
+            id: params[0],
+            nombre: params[1],
+            email: params[2],
+            google_id: params[3],
+            telefono: null,
+            rol: params[4],
+          };
+          return { rows: [] };
+        }
+        if (sql.includes('INSERT INTO perfiles_proveedor')) {
+          providerProfile = {
+            usuario_id: params[0],
+            telefono: null,
+            fotos_trabajo: params[1],
+          };
+          return { rows: [] };
+        }
+        throw new Error(`Unexpected transaction query: ${sql}`);
+      },
+    });
 
   const app = express();
   app.use(express.json());
@@ -63,61 +80,58 @@ test('registers a provider with a profile and lets that provider log in', async 
     await once(server, 'listening');
     const baseUrl = `http://127.0.0.1:${server.address().port}/api/v1/auth`;
 
-    const registrationResponse = await fetch(`${baseUrl}/registro`, {
+    const firstResponse = await fetch(`${baseUrl}/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombre: '  Proveedor de Prueba  ',
-        email: ' PROVEEDOR@example.com ',
-        telefono: '55 1234 5678',
-        password: 'Proveedor1!',
+        idToken: 'valid-google-id-token',
         rol: 'proveedor',
       }),
     });
-    const registration = await registrationResponse.json();
+    const firstData = await firstResponse.json();
 
-    assert.equal(registrationResponse.status, 201);
-    assert.equal(typeof registration.user.id, 'string');
-    assert.deepEqual(registration.user, {
+    assert.equal(firstResponse.status, 201);
+    assert.equal(typeof firstData.token, 'string');
+    assert.deepEqual(firstData.user, {
       id: user.id,
       nombre: 'Proveedor de Prueba',
-      email: 'proveedor@example.com',
+      email: 'proveedor@gmail.com',
+      telefono: null,
       rol: 'proveedor',
     });
     assert.deepEqual(providerProfile, {
       usuario_id: user.id,
-      telefono: '+525512345678',
+      telefono: null,
       fotos_trabajo: '[]',
     });
-    assert.notEqual(user.password_hash, 'Proveedor1!');
-    assert.equal(await bcrypt.compare('Proveedor1!', user.password_hash), true);
 
-    const loginResponse = await fetch(`${baseUrl}/login`, {
+    const secondResponse = await fetch(`${baseUrl}/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: ' PROVEEDOR@example.com ',
-        password: 'Proveedor1!',
+        idToken: 'valid-google-id-token',
         rol: 'proveedor',
       }),
     });
-    const login = await loginResponse.json();
+    const secondData = await secondResponse.json();
 
-    assert.equal(loginResponse.status, 200);
-    assert.deepEqual(login.user, registration.user);
-    assert.equal(typeof login.token, 'string');
-    const tokenPayload = jwt.verify(login.token, process.env.JWT_SECRET);
+    assert.equal(secondResponse.status, 200);
+    assert.deepEqual(secondData.user, firstData.user);
+    const tokenPayload = jwt.verify(secondData.token, process.env.JWT_SECRET);
     assert.equal(tokenPayload.rol, 'proveedor');
     assert.equal(tokenPayload.sub, user.id);
   } finally {
     await new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
+      server.close((error) => (error ? reject(error) : resolve()));
     });
     db.query = originalQuery;
     db.transaction = originalTransaction;
+    googleAuthService.verifyGoogleIdToken = originalVerifyGoogleIdToken;
     if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
     else process.env.JWT_SECRET = originalJwtSecret;
     if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
     else process.env.DATABASE_URL = originalDatabaseUrl;
+    if (originalGoogleClientId === undefined) delete process.env.GOOGLE_CLIENT_ID;
+    else process.env.GOOGLE_CLIENT_ID = originalGoogleClientId;
   }
 });

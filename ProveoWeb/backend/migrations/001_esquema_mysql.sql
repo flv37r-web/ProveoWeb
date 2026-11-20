@@ -1,19 +1,20 @@
 CREATE DATABASE IF NOT EXISTS proveo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE proveo;
 
--- 1. Tabla de Usuarios (UUID generado desde Node.js o MySQL)
-CREATE TABLE IF NOT EXISTS usuarios (
-    id VARCHAR(36) PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL,
-    telefono VARCHAR(20) NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    rol ENUM('cliente', 'proveedor', 'administrador') NOT NULL,
-    estatus VARCHAR(20) DEFAULT 'activo',
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY usuarios_email_unique_idx (email),
-    UNIQUE KEY usuarios_telefono_unique_idx (telefono)
-);
+CREATE TABLE IF NOT EXISTS usuarios (   // Actualizacion Google Auth.
+  id VARCHAR(36) PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  google_id VARCHAR(255) NULL,
+  telefono VARCHAR(20) NULL,
+  password_hash VARCHAR(255) NULL,
+  rol ENUM('cliente', 'proveedor', 'administrador') NOT NULL,
+  estatus VARCHAR(20) DEFAULT 'activo',
+  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY usuarios_email_unique_idx (email),
+  UNIQUE KEY usuarios_google_id_unique_idx (google_id),
+  UNIQUE KEY usuarios_telefono_unique_idx (telefono)
+);                                                   //..
 
 -- 2. Tabla de Perfiles de Proveedor (con todas las columnas de tus 3 migraciones)
 -- Nota: fotos_trabajo cambia de TEXT[] (Postgres) a JSON (MySQL)

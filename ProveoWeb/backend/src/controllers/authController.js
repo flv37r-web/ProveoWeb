@@ -1,9 +1,8 @@
+// Actualizaciuon Google Auth.
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
-const { normalizeMexicanPhone } = require('../utils/mexicanPhone');
-const { validatePassword } = require('../utils/passwordPolicy');
+const googleAuthService = require('../services/googleAuthService');
 
 const parseFotos = (raw) => {
   if (Array.isArray(raw)) return raw;
@@ -15,82 +14,80 @@ const parseFotos = (raw) => {
   }
 };
 
-// 1. Registrar nuevo usuario (Cliente o Proveedor)
-const registrar = async (req, res, next) => {
+// 1. Registrar o iniciar sesión con Google
+const autenticarConGoogle = async (req, res, next) => {
   try {
-    const { nombre, email, telefono, password, rol } = req.body;
-    const nombreLimpio = String(nombre || '').trim();
-    const emailLimpio = String(email || '').trim().toLowerCase();
-    const rolLimpio = rol === 'proveedor' ? 'proveedor' : 'cliente';
+    const { idToken, rol } = req.body;
 
-    const telefonoNormalizado = normalizeMexicanPhone(telefono);
-    if (!telefonoNormalizado) {
-      return res.status(400).json({ error: 'Ingresa un teléfono mexicano válido de 10 dígitos.' });
+    let googleUser;
+    try {
+      googleUser = await googleAuthService.verifyGoogleIdToken(idToken);
+    } catch {
+      return res.status(401).json({ error: 'Token de Google inválido o expirado.' });
     }
 
-    if (!validatePassword(password)) {
-      return res.status(400).json({
-        error: 'La contraseña debe tener entre 10 y 18 caracteres, incluir una mayúscula, un número y un símbolo.',
+    if (!googleUser.emailVerified) {
+      return res.status(401).json({
+        error: 'Tu cuenta de Google debe tener el correo electrónico verificado.',
       });
     }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const nuevoId = crypto.randomUUID();
-
-    await db.transaction(async (tx) => {
-      await tx.query(
-        `INSERT INTO usuarios (id, nombre, email, telefono, password_hash, rol, estatus)
-         VALUES (?, ?, ?, ?, ?, ?, 'activo')`,
-        [nuevoId, nombreLimpio, emailLimpio, telefonoNormalizado, passwordHash, rolLimpio]
-      );
-
-      if (rolLimpio === 'proveedor') {
-        await tx.query(
-          `INSERT INTO perfiles_proveedor (usuario_id, telefono, fotos_trabajo)
-           VALUES (?, ?, ?)`,
-          [nuevoId, telefonoNormalizado, '[]']
-        );
-      }
-    });
-
-    return res.status(201).json({
-      mensaje: 'Registro exitoso. Inicia sesión para continuar.',
-      user: { id: nuevoId, nombre: nombreLimpio, email: emailLimpio, rol: rolLimpio },
-    });
-  } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'El correo o el teléfono ya están registrados en otra cuenta.' });
-    }
-    next(error);
-  }
-};
-
-// 2. Iniciar sesión
-const iniciarSesion = async (req, res, next) => {
-  try {
-    const { email, password, rol } = req.body;
-    const emailLimpio = String(email || '').trim().toLowerCase();
 
     const result = await db.query(
-      `SELECT id, nombre, email, telefono, password_hash, rol, estatus
-       FROM usuarios WHERE LOWER(TRIM(email)) = ? LIMIT 1`,
-      [emailLimpio]
+      `SELECT id, nombre, email, telefono, google_id, rol, estatus
+       FROM usuarios
+       WHERE google_id = ? OR LOWER(TRIM(email)) = ?
+       LIMIT 1`,
+      [googleUser.googleId, googleUser.email]
     );
 
-    const usuario = result.rows[0];
-    if (!usuario) {
-      return res.status(401).json({ error: 'Credenciales inválidas.' });
-    }
+    let usuario = result.rows[0];
+    let statusCode = 200;
 
-    const passwordValido = await bcrypt.compare(String(password || ''), usuario.password_hash);
-    if (!passwordValido) {
-      return res.status(401).json({ error: 'Credenciales inválidas.' });
-    }
+    if (usuario) {
+      if (usuario.estatus !== 'activo') {
+        return res.status(403).json({ error: 'Esta cuenta no está activa.' });
+      }
 
-    if (rol && usuario.rol !== rol) {
-      return res.status(403).json({
-        error: `Esta cuenta está registrada como ${usuario.rol}. Cambia la pestaña de acceso.`,
+      if (rol && usuario.rol !== rol) {
+        return res.status(403).json({
+          error: `Esta cuenta está registrada como ${usuario.rol}. Cambia la pestaña de acceso.`,
+        });
+      }
+
+      if (!usuario.google_id) {
+        await db.query(
+          `UPDATE usuarios SET google_id = ? WHERE id = ?`,
+          [googleUser.googleId, usuario.id]
+        );
+      }
+    } else {
+      const nuevoId = crypto.randomUUID();
+      const rolLimpio = rol === 'proveedor' ? 'proveedor' : 'cliente';
+
+      await db.transaction(async (tx) => {
+        await tx.query(
+          `INSERT INTO usuarios (id, nombre, email, google_id, telefono, password_hash, rol, estatus)
+           VALUES (?, ?, ?, ?, NULL, NULL, ?, 'activo')`,
+          [nuevoId, googleUser.nombre, googleUser.email, googleUser.googleId, rolLimpio]
+        );
+
+        if (rolLimpio === 'proveedor') {
+          await tx.query(
+            `INSERT INTO perfiles_proveedor (usuario_id, telefono, fotos_trabajo)
+             VALUES (?, NULL, ?)`,
+            [nuevoId, '[]']
+          );
+        }
       });
+
+      usuario = {
+        id: nuevoId,
+        nombre: googleUser.nombre,
+        email: googleUser.email,
+        telefono: null,
+        rol: rolLimpio,
+      };
+      statusCode = 201;
     }
 
     const token = jwt.sign(
@@ -99,7 +96,7 @@ const iniciarSesion = async (req, res, next) => {
       { expiresIn: '7d' }
     );
 
-    return res.status(200).json({
+    return res.status(statusCode).json({
       token,
       user: {
         id: usuario.id,
@@ -110,11 +107,16 @@ const iniciarSesion = async (req, res, next) => {
       },
     });
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        error: 'Esta cuenta de Google o correo ya está registrada.',
+      });
+    }
     next(error);
   }
 };
 
-// 3. Obtener toda la información del perfil (Cliente o Proveedor)
+// 2. Obtener toda la información del perfil (Cliente o Proveedor)
 const obtenerMiCuenta = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user.sub;
@@ -159,7 +161,7 @@ const obtenerMiCuenta = async (req, res, next) => {
   }
 };
 
-// 4. Eliminar por completo la cuenta (Cliente o Proveedor)
+// 3. Eliminar por completo la cuenta (Cliente o Proveedor)
 const eliminarMiCuenta = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user.sub;
@@ -169,15 +171,16 @@ const eliminarMiCuenta = async (req, res, next) => {
       await tx.query(`DELETE FROM usuarios WHERE id = ?`, [userId]);
     });
 
-    return res.status(200).json({ mensaje: 'Tu cuenta y perfil han sido eliminados permanentemente.' });
+    return res.status(200).json({
+      mensaje: 'Tu cuenta y perfil han sido eliminados permanentemente.',
+    });
   } catch (error) {
     next(error);
   }
 };
 
 module.exports = {
-  registrar,
-  iniciarSesion,
+  autenticarConGoogle,
   obtenerMiCuenta,
   eliminarMiCuenta,
 };
